@@ -46,9 +46,11 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 | **Tooling & Paradigm** | Static analysis, Policy-as-Code (OPA/Rego). | Sidecar proxies, runtime instrumentation, dynamic monitoring. |
 | **Academic Alignment** | Systems Architecture (structural constraints & metadata contracts). | Distributed networking and security operations. |
 
-## USE CASE: MUNDAT (TK UC)
+## USE CASE #1: MUNDAT (TK UC)
 
-### 1. TK Test Case 1: The "PASS" Scenario
+3 different test scenarios to demonstrate InspectR's design-time compliance evaluation capabilities: PASS/ FAIL / HUMAN
+
+### 1A. TK "PASS" Scenario
 
 - **Dataset:** `IoT` Stormwater Basin Sensors (Time-series data, size ~50 MB, contains no personal data, under an Open License).
 
@@ -56,7 +58,7 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 - **Functional Requirement:** **TK.FR.01** (Dataset uses a standardized metadata vocabulary to prove its public nature).
 
-#### 7-Stage Pipeline Configuration
+#### Pipeline Configuration
 
 1. **Stage 1 (Ingest):** Connected to the `IoT_Stormwater_Basin_Sensors` source.
 2. **Stage 2 (Triage):** `classification` set to `public_environmental`.
@@ -76,14 +78,14 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 ---
 
-### 2. TK Test Case 2: The "FAIL" Scenario (Critical PII Exposure)
+### 1B. TK "FAIL" Scenario 
 
 - **Dataset:** `Sickleave` HR Dataset (Aggregated demographic and monthly rotation survey records containing indirect PII).
 
 - **User Story:** **TK.US.01 / TK.US.12** (Compliance Process Owner evaluating data requests and requiring automated support to detect indirect identification risks).
 - **Functional Requirement:** **TK.FR.03 / TK.FR.10** (System must automatically identify compliance defects and tag unprotected PII from a data flow configuration).
 
-### 7-Stage Pipeline Configuration
+### Pipeline Configuration
 
 1. **Stage 1 (Ingest):** Connected to `HR_System_Job_Rotation_Units`.
 2. **Stage 2 (Triage):** `classification` set to `sensitive_hr_metrics`.
@@ -105,14 +107,14 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 ---
 
-## 3. TK Test Case 3: The "HUMAN" Scenario (Conditional Data Governance Triage)
+## 1C. TK "HUMAN" Scenario (Conditional Data Governance Triage)
 
 - **Dataset:** `Sickleave` HR Dataset (Requested by academic research teams for algorithmic data innovation).
 
 - **User Story:** **TK.US.03 / TK.US.04 / TK.US.11** (Compliance Process Owner managing data-sharing contracts and verifying legal/ethical boundaries before formal delivery).
 - **Functional Requirement:** **TK.FR.04 / TK.FR.14** (System must flag conditional issues requiring complex contract evaluation or high-level management verification).
 
-### 7-Stage Pipeline Configuration
+### Pipeline Configuration
 
 1. **Stage 1 (Ingest):** Connected to `HR_System_Age_Distribution`.
 2. **Stage 2 (Triage):** `classification` set to `academic_request`.
@@ -132,6 +134,7 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 - **Remedy Suggestion:**
   - _Human-Readable:_ "Triage this design to the Compliance Process Owner and Data Protection Officer to verify the physical data-sharing contract and apply the approved contract token."
   - _Machine-Readable:_ `{"action": "triage_to_governance", "required_roles": ["Compliance_Process_Owner", "Data_Protection_Officer"]}`
+
 
 ### Scientific contribution
 
