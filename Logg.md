@@ -1,3 +1,13 @@
+# Why design-time? What is actually checkable at design-time?
+
+**RQ** Which compliance properties can be transformed into inspectable architectural properties, and what evidence must a blueprint contain to allow automated design-time inspection?
+
+
+<img width="992" height="720" alt="image" src="https://github.com/user-attachments/assets/36626995-94a1-4250-8277-421e8944dec7" />
+
+
+
+
 # InspectR Review Summary 260926
 
 The review identified several logical, technical, and functional weaknesses in the InspectR proof of concept. The most important corrected issue concerned the interpretation of human-oversight evidence under AIA-14.
