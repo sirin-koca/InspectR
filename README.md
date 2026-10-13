@@ -122,20 +122,6 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
     *   *Human-Readable:* "Triage this design to the Compliance Process Owner and Data Protection Officer to verify the physical data-sharing contract and apply the approved contract token."
     *   *Machine-Readable:* `{"action": "triage_to_governance", "required_roles": ["Compliance_Process_Owner", "Data_Protection_Officer"]}`
 
-
-### Repository Structure
-
-```text
-inspectr-poc/
-├── app.py          # Application entry point
-├── data/           # Pipeline blueprints, datasets and supporting files
-├── pages/          # InspectR interface and subpages, taxonomy
-├── policies/       # Rego Policy-as-Code rules
-├── src/            # Evaluation/integration logic
-├── images/         # UI and project assets
-└── requirements.txt
-```
-
 ### Scientific contribution
 InspectR demonstrates an architecture and operational method for translating organisational policies into explainable Policy-as-Code controls over static data-pipeline blueprints.
 
@@ -153,7 +139,7 @@ The contribution can be evaluated through:
 ### Disclaimer
 This is a research prototype. InspectR does not certify compliance, determine legal compliance as a whole, encode legal text directly, replace legal interpretation, or execute the pipeline. Results are correct only relative to the explicitly encoded operational policy and available blueprint evidence.
 
-InspectR is an independent, standalone, generic policy engine. This repository showcases only a specific use case (TK use case). The PoC is designed to demonstrate the feasibility of the approach without the complexity of a full implementation. During this PoC implementation of InspectR WE WILL NOT USE IR (the graph model, the Intermediate Representation) for KISS purposes.
+InspectR is an independent, standalone, generic policy engine. This repository showcases only a specific use case (TK use case). The PoC is designed to demonstrate the feasibility of the approach without the complexity of a full implementation. IR (the graph model, the Intermediate Representation) is excluded from this PoC for KISS purposes.
 
 InspectR is developed as part of an MSc thesis at the University of Oslo in collaboration with SINTEF and the EU-funded DataPACT project.
 
