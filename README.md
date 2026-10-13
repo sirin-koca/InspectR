@@ -13,6 +13,8 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 > - **Structural**: The organisational and technical structures that must be in place to ensure compliance.
 > - **Runtime**: The conditions and constraints that must be met during the operation of the system.
 
+> **If architectural and compliance metadata exist, InspectR can inspect them.**
+
 ## Research Question
 Which legal requirements can be transformed into inspectable architectural properties, what evidence is required to assess them, and how much assurance does design-time inspection provide compared to runtime auditing?
 
