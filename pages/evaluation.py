@@ -31,6 +31,46 @@ def status_message(status: str) -> str:
     }.get(status, f"⚪ {status}")
 
 
+def render_evidence(evidence: dict) -> None:
+    input_evidence = evidence.get("input_evidence", [])
+    if input_evidence:
+        st.write("**Input evidence from the uploaded blueprint**")
+        rows = []
+        for item in input_evidence:
+            if "fields" in item:
+                for field in item["fields"]:
+                    rows.append(
+                        {
+                            "Node": f"{item.get('node_label', '')} "
+                            f"(id={item.get('node_id', '')})",
+                            "Blueprint selector": field.get("selector"),
+                            "Observed": field.get("observed"),
+                            "Expected": field.get("expected"),
+                            "Condition": field.get("condition"),
+                        }
+                    )
+            else:
+                rows.append(
+                    {
+                        "Node": "",
+                        "Blueprint selector": item.get("selector"),
+                        "Observed": item.get("observed"),
+                        "Expected": item.get("expected"),
+                        "Condition": item.get("condition"),
+                    }
+                )
+        st.dataframe(
+            pd.DataFrame(rows),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    derived_evidence = evidence.get("derived_evidence")
+    if derived_evidence:
+        st.write("**Derived evidence calculated by Rego**")
+        st.json(derived_evidence)
+
+
 def render_results(results: list[dict]) -> None:
     st.caption(status_counts(results))
     for result in results:
@@ -40,7 +80,7 @@ def render_results(results: list[dict]) -> None:
             st.write(f"**Legal reference:** {result['legal_reference']}")
             st.write(result["reason"])
             st.write("**Evidence**")
-            st.json(result["evidence"])
+            render_evidence(result["evidence"])
             if result["remedy"]:
                 st.write("**Remedy**")
                 st.write(result["remedy"])
@@ -69,18 +109,35 @@ def uploaded_file_signature(uploaded_file) -> str:
 st.subheader("Evaluation")
 st.caption(
     "Upload two static JSON pipeline blueprints and evaluate them independently "
-    "with the same InspectR Policy-as-Code rules. No results are precomputed."
+    "with the same InspectR Policy-as-Code rules in realtime."
 )
 
-st.info(
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.info(
     """
-    **How the experiment works**
+    **How the experiment works?**
 
     1. Upload the first JSON blueprint and run InspectR.
     2. Upload the second JSON blueprint and run InspectR.
     3. Inspect the two independent result sets side by side.
     4. Compare results only after both live evaluations have completed.
 """
+)
+
+with col2:
+    st.warning(
+    """
+    **Important note**
+    The evidence displayed by InspectR is generated during evaluation. 
+    Some evidence comes directly from fields in the uploaded blueprint, 
+    while other evidence is derived by the Rego policy when it inspects those fields.
+
+    - Input evidence: The actual field read from the uploaded JSON.
+    - Derived evidence: The conclusion or summary calculated by Rego.
+    - Evidence location: The JSON path and node to which the evidence belongs.
+    - Policy location: The rule and condition that evaluated it.
+   """
 )
 
 st.markdown("#### UPLOAD - EVALUATE - COMPARE")
@@ -224,6 +281,30 @@ if results_1 is not None and results_2 is not None:
         use_container_width=True,
         hide_index=True,
     )
+
+    st.markdown("##### Rule-level evidence comparison")
+    for rule in RULE_ORDER:
+        result_1 = results_by_rule_1.get(rule)
+        result_2 = results_by_rule_2.get(rule)
+        with st.expander(
+            f"{rule}: {(result_1 or {}).get('status', 'MISSING')} vs "
+            f"{(result_2 or {}).get('status', 'MISSING')}"
+        ):
+            evidence_columns = st.columns(2)
+            for column, name, result in (
+                (evidence_columns[0], name_1, result_1),
+                (evidence_columns[1], name_2, result_2),
+            ):
+                with column:
+                    st.markdown(
+                        f"**{name} — "
+                        f"{result.get('status', 'MISSING')}**"
+                    )
+                    if result:
+                        st.write(result["reason"])
+                        render_evidence(result["evidence"])
+                    else:
+                        st.caption("This rule did not return a result.")
 
     st.info(
         """

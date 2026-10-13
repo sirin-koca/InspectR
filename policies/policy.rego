@@ -62,9 +62,24 @@ article_structure := {
     "legal_reference": "MUNDAT pipeline structure",
     "reason": "The blueprint does not contain the required TK compliance-flow stages and connections.",
     "evidence": {
-        "missing_stages": missing_stages,
-        "observed_stages": [node.label | some node in nodes],
-        "observed_edges": actual_edges
+        "input_evidence": [
+            {
+                "selector": "pipeline.nodes[*].label",
+                "observed": [node.label | some node in nodes],
+                "expected": [stage | stage := required_stages[_]],
+                "condition": "All required TK stages are present."
+            },
+            {
+                "selector": "pipeline.connections[*].from/to",
+                "observed": actual_edges,
+                "expected": expected_edges,
+                "condition": "The six expected stage connections are present."
+            }
+        ],
+        "derived_evidence": {
+            "missing_stages": missing_stages,
+            "flow_valid": false
+        }
     },
     "remedy": "Add the missing TK stages and connect them in the documented intake-to-output order."
 } if {
@@ -75,9 +90,24 @@ article_structure := {
     "legal_reference": "MUNDAT pipeline structure",
     "reason": "The blueprint contains the required stages, but not in the documented order.",
     "evidence": {
-        "missing_stages": [],
-        "observed_stages": [node.label | some node in nodes],
-        "observed_edges": actual_edges
+        "input_evidence": [
+            {
+                "selector": "pipeline.nodes[*].label",
+                "observed": [node.label | some node in nodes],
+                "expected": [stage | stage := required_stages[_]],
+                "condition": "All required TK stages are present."
+            },
+            {
+                "selector": "pipeline.connections[*].from/to",
+                "observed": actual_edges,
+                "expected": expected_edges,
+                "condition": "The six expected stage connections are present."
+            }
+        ],
+        "derived_evidence": {
+            "missing_stages": [],
+            "flow_valid": false
+        }
     },
     "remedy": "Connect the TK stages in the documented intake-to-output order."
 } if {
@@ -89,7 +119,24 @@ article_structure := {
     "legal_reference": "MUNDAT pipeline structure",
     "reason": "The blueprint contains the seven documented TK compliance-flow stages and connections.",
     "evidence": {
-        "stages_checked": count(nodes)
+        "input_evidence": [
+            {
+                "selector": "pipeline.nodes[*].label",
+                "observed": [node.label | some node in nodes],
+                "expected": [stage | stage := required_stages[_]],
+                "condition": "All required TK stages are present."
+            },
+            {
+                "selector": "pipeline.connections[*].from/to",
+                "observed": actual_edges,
+                "expected": expected_edges,
+                "condition": "The six expected stage connections are present."
+            }
+        ],
+        "derived_evidence": {
+            "stages_checked": count(nodes),
+            "flow_valid": true
+        }
     },
     "remedy": null
 } if {
@@ -102,13 +149,27 @@ logging_failures contains node.label if {
     object.get(object.get(node, "compliance_extensions", {}), "has_logging", false) != true
 }
 
+logging_evidence contains {
+    "node_id": node.id,
+    "node_label": node.label,
+    "selector": sprintf("pipeline.nodes[id=%s].compliance_extensions.has_logging", [node.id]),
+    "observed": object.get(object.get(node, "compliance_extensions", {}), "has_logging", null),
+    "expected": true,
+    "condition": "Every pipeline stage declares logging capability."
+} if {
+    some node in nodes
+}
+
 article_traceability := {
     "rule": "TK-TRACE-01",
     "status": "FAIL",
     "legal_reference": "MUNDAT logging and traceability requirement",
     "reason": "One or more pipeline stages do not declare logging capability.",
     "evidence": {
-        "nodes_without_logging": logging_failures
+        "input_evidence": logging_evidence,
+        "derived_evidence": {
+            "nodes_without_logging": logging_failures
+        }
     },
     "remedy": "Declare logging capability for every pipeline stage and retain traceability of the request, data access, checks, and decision."
 } if {
@@ -119,7 +180,10 @@ article_traceability := {
     "legal_reference": "MUNDAT logging and traceability requirement",
     "reason": "All pipeline stages declare design-time logging capability.",
     "evidence": {
-        "nodes_checked": count(nodes)
+        "input_evidence": logging_evidence,
+        "derived_evidence": {
+            "nodes_checked": count(nodes)
+        }
     },
     "remedy": null
 }
@@ -127,6 +191,27 @@ article_traceability := {
 data_source_nodes contains node if {
     some node in nodes
     node.kind == "source"
+}
+
+source_evidence contains {
+    "node_id": node.id,
+    "node_label": node.label,
+    "fields": [
+        {
+            "selector": sprintf("pipeline.nodes[id=%s].compliance_extensions.source_id", [node.id]),
+            "observed": object.get(object.get(node, "compliance_extensions", {}), "source_id", null),
+            "expected": "non-empty string",
+            "condition": "The source is identified."
+        },
+        {
+            "selector": sprintf("pipeline.nodes[id=%s].compliance_extensions.approved_source", [node.id]),
+            "observed": object.get(object.get(node, "compliance_extensions", {}), "approved_source", null),
+            "expected": true,
+            "condition": "The source is marked approved."
+        }
+    ]
+} if {
+    some node in data_source_nodes
 }
 
 invalid_sources contains node.label if {
@@ -147,7 +232,10 @@ article_data_provenance := {
     "legal_reference": "MUNDAT data-source and provenance requirement",
     "reason": "A pipeline data source lacks a source identifier or is not marked as approved.",
     "evidence": {
-        "invalid_sources": invalid_sources
+        "input_evidence": source_evidence,
+        "derived_evidence": {
+            "invalid_sources": invalid_sources
+        }
     },
     "remedy": "Declare the source identifier and approval status for each data-source node."
 } if {
@@ -158,7 +246,10 @@ article_data_provenance := {
     "legal_reference": "MUNDAT data-source and provenance requirement",
     "reason": "Pipeline data sources provide declared provenance and approval evidence.",
     "evidence": {
-        "data_sources_checked": count(data_source_nodes)
+        "input_evidence": source_evidence,
+        "derived_evidence": {
+            "data_sources_checked": count(data_source_nodes)
+        }
     },
     "remedy": null
 }
@@ -168,13 +259,29 @@ risk_check_nodes contains node.label if {
     node.label == "run_compliance_checks"
 }
 
+risk_check_evidence := [
+    {
+        "node_id": node.id,
+        "node_label": node.label,
+        "selector": sprintf("pipeline.nodes[id=%s].label", [node.id]),
+        "observed": node.label,
+        "expected": "run_compliance_checks",
+        "condition": "A dedicated compliance and risk-assessment stage exists."
+    } |
+    some node in nodes
+    node.label == "run_compliance_checks"
+]
+
 article_risk := {
     "rule": "TK-RISK-01",
     "status": "FAIL",
     "legal_reference": "MUNDAT DPIA and risk-assessment requirement",
     "reason": "The blueprint does not contain a dedicated compliance and risk-assessment stage.",
     "evidence": {
-        "risk_check_stage": "run_compliance_checks"
+        "input_evidence": risk_check_evidence,
+        "derived_evidence": {
+            "risk_check_stage_present": false
+        }
     },
     "remedy": "Add a stage that performs the documented compliance, DPIA, and risk checks."
 } if {
@@ -185,7 +292,10 @@ article_risk := {
     "legal_reference": "MUNDAT DPIA and risk-assessment requirement",
     "reason": "The blueprint contains a dedicated compliance and risk-assessment stage.",
     "evidence": {
-        "risk_check_stage": risk_check_nodes
+        "input_evidence": risk_check_evidence,
+        "derived_evidence": {
+            "risk_check_stage_present": true
+        }
     },
     "remedy": null
 }
@@ -201,6 +311,18 @@ missing_human_review contains node.label if {
     object.get(ext, "human_oversight", null) == null
 }
 
+human_review_evidence := [
+    {
+        "node_id": node.id,
+        "node_label": node.label,
+        "selector": sprintf("pipeline.nodes[id=%s].compliance_extensions.human_oversight", [node.id]),
+        "observed": object.get(object.get(node, "compliance_extensions", {}), "human_oversight", null),
+        "expected": true,
+        "condition": "The sharing decision stage declares human review."
+    } |
+    some node in decision_nodes
+]
+
 disabled_human_review contains node.label if {
     some node in decision_nodes
     ext := object.get(node, "compliance_extensions", {})
@@ -213,7 +335,10 @@ article_human_review := {
     "legal_reference": "MUNDAT sharing-decision review requirement",
     "reason": "The sharing decision stage explicitly disables human review.",
     "evidence": {
-        "components_without_human_review": disabled_human_review
+        "input_evidence": human_review_evidence,
+        "derived_evidence": {
+            "components_without_human_review": disabled_human_review
+        }
     },
     "remedy": "Provide a human approval or override step before sharing data."
 } if {
@@ -224,7 +349,10 @@ article_human_review := {
     "legal_reference": "MUNDAT sharing-decision review requirement",
     "reason": "The blueprint contains a sharing decision stage but does not provide explicit human-review evidence.",
     "evidence": {
-        "components_requiring_review": missing_human_review
+        "input_evidence": human_review_evidence,
+        "derived_evidence": {
+            "components_requiring_review": missing_human_review
+        }
     },
     "remedy": "Declare human review or an override checkpoint before sharing data."
 } if {
@@ -236,7 +364,10 @@ article_human_review := {
     "legal_reference": "MUNDAT sharing-decision review requirement",
     "reason": "The sharing decision stage explicitly represents human review evidence.",
     "evidence": {
-        "decision_stages_checked": count(decision_nodes)
+        "input_evidence": human_review_evidence,
+        "derived_evidence": {
+            "decision_stages_checked": count(decision_nodes)
+        }
     },
     "remedy": null
 } if {

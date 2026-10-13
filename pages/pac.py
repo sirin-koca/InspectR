@@ -25,7 +25,7 @@ pipeline = [
     ("2. TK/MUNDAT policy", "Operational interpretation", "What the use case requires"),
     ("3. Blueprint evidence", "Observable representation", "Nodes, connections, and metadata"),
     ("4. Rego rule", "Executable condition", "Deterministic Policy-as-Code"),
-    ("5. OPA result", "Explainable decision", "OK, FAIL, or HUMAN"),
+    ("5. InspectR result", "Explainable decision", "OK, FAIL, or HUMAN"),
 ]
 
 for row in range(0, len(pipeline), 3):

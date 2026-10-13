@@ -5,7 +5,7 @@ import streamlit as st
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="InspectR | Demo",
+    page_title="InspectR | PoC",
     page_icon="👁️‍🗨️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -61,14 +61,15 @@ if "evaluation_results" not in st.session_state:
 # --------------------------------------------------
 
 pages = [
+    st.Page("pages/research.py", title=":: Research"),
     st.Page("pages/main.py", title=":: InspectR", default=True),
     st.Page("pages/overview.py", title=":: Overview"),
     st.Page("pages/pac.py", title=":: Engineering PaC"),
     st.Page("pages/tk_uc.py", title=":: Use Case"),
-    st.Page("pages/research.py", title=":: Research"),
     st.Page("pages/taxonomy.py", title=":: Taxonomy"),
     st.Page("pages/architecture.py", title=":: Architecture"),
     st.Page("pages/evaluation.py", title=":: Evaluation"),
+    st.Page("pages/evidence.py", title=":: Evidence"),
     st.Page("pages/about.py", title=":: About"),
 ]
 

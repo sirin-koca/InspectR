@@ -51,6 +51,56 @@ st.dataframe(
 )
 
 # ---------------------------------------------------------------------
+# SELECTED DESIGN-TIME COMPLIANCE ISSUES
+# ---------------------------------------------------------------------
+
+st.markdown("#### TK UC Compliance Issues (selected subset)")
+
+selected_compliance_issues = [
+    {
+        "TK compliance issue": "Pipeline structure and compliance checkpoints",
+        "Design-time evidence": "Node labels and connections",
+        "How InspectR checks it": "TK-STRUCT-01 verifies the seven required stages and six expected connections.",
+        "Assessment boundary": "Checks declared blueprint structure; does not verify runtime behaviour.",
+    },
+    {
+        "TK compliance issue": "Data-source provenance and approval",
+        "Design-time evidence": "Source node: source_id and approved_source",
+        "How InspectR checks it": "TK-DATA-01 verifies that each source has an identifier and is marked approved.",
+        "Assessment boundary": "Checks declared metadata; does not verify the source or approval externally.",
+    },
+    {
+        "TK compliance issue": "Processing traceability",
+        "Design-time evidence": "has_logging on each pipeline node",
+        "How InspectR checks it": "TK-TRACE-01 verifies that every stage declares logging capability.",
+        "Assessment boundary": "Does not verify that logs are produced, complete, or retained.",
+    },
+    {
+        "TK compliance issue": "DPIA and risk-assessment checkpoint",
+        "Design-time evidence": "A node labelled run_compliance_checks",
+        "How InspectR checks it": "TK-RISK-01 verifies that a dedicated compliance and risk-check stage exists.",
+        "Assessment boundary": "Does not assess whether a DPIA was completed or is legally adequate.",
+    },
+    {
+        "TK compliance issue": "Human review before sharing",
+        "Design-time evidence": "human_oversight on prepare_sharing_decision",
+        "How InspectR checks it": "TK-HUMAN-01 returns OK, FAIL, or HUMAN based on the declared value.",
+        "Assessment boundary": "Checks declared review evidence; does not verify review in practice.",
+    },
+]
+
+st.dataframe(
+    pd.DataFrame(selected_compliance_issues),
+    use_container_width=True,
+    hide_index=True,
+)
+
+st.caption(
+    "This is a selected design-time subset. InspectR evaluates machine-readable "
+    "blueprint evidence; it does not establish complete GDPR compliance."
+)
+
+# ---------------------------------------------------------------------
 # TK PIPELINE BLUEPRINT
 # ---------------------------------------------------------------------
 
