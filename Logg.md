@@ -2,10 +2,29 @@
 
 **RQ** Which compliance properties can be transformed into inspectable architectural properties, and what evidence must a blueprint contain to allow automated design-time inspection?
 
+- For every rule InspectR checks, identify the exact evidence required.
+<img width="987" height="226" alt="image" src="https://github.com/user-attachments/assets/bd322c35-18a6-4824-b364-1ced75bdbeac" />
 
-<img width="992" height="720" alt="image" src="https://github.com/user-attachments/assets/36626995-94a1-4250-8277-421e8944dec7" />
+<img width="672" height="690" alt="image" src="https://github.com/user-attachments/assets/68648737-30e3-4ad7-aead-14c57d2bbd32" />
 
+# What is MUNDAT case is about? 
+Trondheim municipality has a large number of data requests, many systems, many stakeholders, inconsistent processes, limited compliance expertise, limited metadata, and difficulty assessing compliance risks consistently and efficiently.
 
+It is primarily a governance + architecture + process orchestration problem.
+
+The use case explicitly mentions:
+- •	DPIA execution
+- •	risk assessment
+- •	identifying relvant systems
+- •	data integration
+- •	anonymisation
+- •	secure sharing
+- •	documenting compliance measures
+- •	data sharing contracts
+- •	access control
+- •	metadata vocabularies
+- •	lineage and traceability
+- •	compliance automation where possible
 
 
 # InspectR Review Summary 260926
