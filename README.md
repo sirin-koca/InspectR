@@ -30,14 +30,11 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 ## Main Components
 
-1. Pipeline Blueprint: Serves as static evidence (e.g., inLUMEN JSON) containing inspectable design-time facts.
-2. Organisational Policy: Defines expected evidence and conditions for compliance.
-3. Rego Rules: Machine-executable representations of organisational policies.
-4. OPA Engine: Evaluates blueprint evidence against Rego rules.
-5. InspectR Engine: Orchestrates evaluation and outputs status, evidence, reasons, rule references, and remedies.
-
-![Architecture diagram](https://github.com/user-attachments/assets/b5a0fdb4-8da4-4e42-b50c-b0fb126dc812)
-![Architecture diagram](https://github.com/user-attachments/assets/f8edb06e-723b-495f-ab9b-33f7d579591d)
+1. **Pipeline Blueprint**: Serves as static evidence (e.g., inLUMEN JSON) containing inspectable design-time facts.
+2. **Organisational Policy**: Defines expected evidence and conditions for compliance.
+3. **Rego Rules**: Machine-executable representations of organisational policies.
+4. **OPA Engine**: Evaluates blueprint evidence against Rego rules.
+5. **InspectR Engine**: Orchestrates evaluation and outputs status, evidence, reasons, rule references, and remedies.
 
 # USE CASE: MUNDAT (TK UC) 
 This PoC uses the **MUNDAT: Trondheim Kommune (TK) use case** and selected provisions of the **GDPR** to demonstrate the approach.The PoC evaluates a static **inLUMEN TK pipeline blueprint** directly against independently defined **Rego policies** using **Open Policy Agent (OPA)**.
