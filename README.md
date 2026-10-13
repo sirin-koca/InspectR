@@ -16,9 +16,11 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 | **Core Disciplines** | Systems Architecture & Engineering, Compliance Engineering, Policy-as-Code (PaC). |
 | **Application Domain** | AI/Data Operations, compliance-aware data pipelines, and heterogeneous architectures. |
 | **Architectural Context** | Policy-as-Code, Open Policy Agent (OPA), LLM-generated data pipeline structures and multi-agent workflows (e.g., policy interpreter agents, remedy generator agents). |
+| **Separation of Concerns** | Decoupling high-level compliance policies from low-level technical pipeline implementation. |
 | **Technical Stack** | Python, Plotly, Pandas, JSON, Policy-as-Code, Open Policy Agent (OPA), Rego, inLUMEN, Streamlit |
 | **Industrial Context** | SINTEF Digital, DataPACT |
 | **Legal Domain** | 1️⃣ Privacy and GDPR, Use Case 1: MUNDAT TK UC, 2️⃣ EU AI Act (AIA) with Use Case 2 |
+
 
 ---
 
