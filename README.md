@@ -30,31 +30,11 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 ## Main Components
 
-1. **Pipeline blueprint = EVIDENCE**
-
-   The inLUMEN JSON contains the design-time facts InspectR can inspect.
-
-2. **Organisational policy = CONDITION / REQUIREMENT**
-
-   It defines what evidence is expected and what should count as acceptable, unacceptable, or insufficient.
-
-3. **Rego = EXECUTABLE REPRESENTATION OF THAT POLICY**
-
-   The organisational policy conditions are encoded as machine-executable Rego rules.
-
-4. **OPA = EVALUATOR**
-
-   OPA takes:
-
-   ```text
-   Pipeline blueprint (evidence)
-           +
-   Rego rules (encoded policy)
-           ↓
-        evaluates
-           ↓
-   OK / FAIL / HUMAN
-   ```
+1. Pipeline Blueprint: Serves as static evidence (e.g., inLUMEN JSON) containing inspectable design-time facts.
+2. Organisational Policy: Defines expected evidence and conditions for compliance.
+3. Rego Rules: Machine-executable representations of organisational policies.
+4. OPA Engine: Evaluates blueprint evidence against Rego rules.
+5. InspectR Engine: Orchestrates evaluation and outputs status, evidence, reasons, rule references, and remedies.
 
 ![Architecture diagram](https://github.com/user-attachments/assets/b5a0fdb4-8da4-4e42-b50c-b0fb126dc812)
 ![Architecture diagram](https://github.com/user-attachments/assets/f8edb06e-723b-495f-ab9b-33f7d579591d)
