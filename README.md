@@ -21,12 +21,11 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 ---
 
-**Core definitions**
+## Core definitions
 
 - **Law** is the mandatory requirement set by governments (e.g., GDPR, EU AI Act) that carries legal penalties for non-compliance.
 - **Policy** is the internal interpretation of the law by an organisation, translating those external laws into specific, actionable workplace rules.
 - **Compliance** is the ongoing execution and proof that the organisation is actually following both the internal policies and external laws.
-
 
 ## Main Components
 
@@ -35,6 +34,17 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 3. **Rego Rules**: Machine-executable representations of organisational policies.
 4. **OPA Engine**: Evaluates blueprint evidence against Rego rules.
 5. **InspectR Engine**: Orchestrates evaluation and outputs status, evidence, reasons, rule references, and remedies.
+
+## Why desing-time compliance?
+
+| Dimension | Design-Time Compliance (InspectR Focus) | Run-Time Compliance |
+| :--- | :--- | :--- |
+| **Operational Phase** | Pre-deployment, architectural design, blueprint generation. | Post-deployment, active execution phase. |
+| **Primary Target** | Topology graphs, metadata contracts, structural data flow mappings. | Live data payloads, execution traces, dynamic traffic interception. |
+| **Core Analogy** | Installing a fire alarm blueprint before building occupancy. | Extinguishing an active fire or checking smoke particles. |
+| **Tooling & Paradigm** | Static analysis, Policy-as-Code (OPA/Rego). | Sidecar proxies, runtime instrumentation, dynamic monitoring. |
+| **Academic Alignment** | Systems Architecture (structural constraints & metadata contracts). | Distributed networking and security operations. |
+
 
 # USE CASE: MUNDAT (TK UC) 
 This PoC uses the **MUNDAT: Trondheim Kommune (TK) use case** and selected provisions of the **GDPR** to demonstrate the approach.The PoC evaluates a static **inLUMEN TK pipeline blueprint** directly against independently defined **Rego policies** using **Open Policy Agent (OPA)**.
