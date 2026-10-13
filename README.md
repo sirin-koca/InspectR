@@ -4,7 +4,17 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 > InspectR is a design‑time policy engine that operationalises regulatory requirements (GDPR / AIA) as Policy‑as‑Code, by utilising decoupled OPA/Rego rules to statically assess pipeline blueprints and outputs machine‑readable governance results pre‑deployment.
 
-> InspectR investigates the boundaries of compliance automation and how regulatory requirements can be operationalised into traceable, evidence-bound, machine-checkable design-time policies.
+> InspectR investigates the boundaries of compliance automation at design-time and how regulatory requirements can be operationalised into traceable, evidence-bound, machine-checkable design-time policies.
+
+> Design-time compliance checking is not about determining whether a violation will happen. It is about determining whether the system is capable of complying when it runs. 
+
+> Compliance requirements are typically categorised as:
+>
+> - **Structural requirements**: The organisational and technical structures that must be in place to ensure compliance.
+> - **Runtime requirements**: The conditions and constraints that must be met during the operation of the system.
+
+## Research Question
+Which legal requirements can be transformed into inspectable architectural properties, what evidence is required to assess them, and how much assurance does design-time inspection provide compared to runtime auditing?
 
 ## Research Profile
 
