@@ -37,12 +37,12 @@ This document outlines the three validation scenarios used to test the **Inspect
 
 ## 1. Test Case 1: The "PASS" Scenario (Environmental Open Data)
 
-### 📋 MUNDAT Context Mapping
+### MUNDAT Context Mapping
 *   **Dataset:** `IoT` Stormwater Basin Sensors (Time-series data, size ~50 MB, contains no personal data, under an Open License).
 *   **User Story:** **TK.US.09 / TK.US.10** (Data Consumer accessing pre-authorized, open datasets to provide automated services efficiently).
 *   **Functional Requirement:** **TK.FR.01** (Dataset uses a standardized metadata vocabulary to prove its public nature).
 
-### 🛠️ 7-Stage Pipeline Configuration
+### 7-Stage Pipeline Configuration
 1.  **Stage 1 (Ingest):** Connected to the `IoT_Stormwater_Basin_Sensors` source.
 2.  **Stage 2 (Triage):** `classification` set to `public_environmental`.
 3.  **Stage 3 (Pre-Processing):** Core data cleaning and timestamp harmonization.
@@ -51,7 +51,7 @@ This document outlines the three validation scenarios used to test the **Inspect
 6.  **Stage 6 (Access Control):** Protocols default to public `open_access`.
 7.  **Stage 7 (Egress):** Pipeline targets the `Open_Data_Portal`.
 
-### 💻 InspectR Output Performance
+### InspectR Output Performance
 *   **Status:** ✅ **PASS**
 *   **Explanation:** Design-time structural validation successful. Safe pathing confirmed for non-personal environmental metrics routing directly to a public endpoint.
 *   **Exact Evidence:** `input.data_type == "Non-Personal"` maps smoothly to `input.stages.target == "Open_Data_Portal"`.
@@ -61,12 +61,12 @@ This document outlines the three validation scenarios used to test the **Inspect
 
 ## 2. Test Case 2: The "FAIL" Scenario (Critical PII Exposure)
 
-### 📋 MUNDAT Context Mapping
+### MUNDAT Context Mapping
 *   **Dataset:** `Sickleave` HR Dataset (Aggregated demographic and monthly rotation survey records containing indirect PII).
 *   **User Story:** **TK.US.01 / TK.US.12** (Compliance Process Owner evaluating data requests and requiring automated support to detect indirect identification risks).
 *   **Functional Requirement:** **TK.FR.03 / TK.FR.10** (System must automatically identify compliance defects and tag unprotected PII from a data flow configuration).
 
-### 🛠️ 7-Stage Pipeline Configuration
+### 7-Stage Pipeline Configuration
 1.  **Stage 1 (Ingest):** Connected to `HR_System_Job_Rotation_Units`.
 2.  **Stage 2 (Triage):** `classification` set to `sensitive_hr_metrics`.
 3.  **Stage 3 (Pre-Processing):** Pipeline runs standard internal harmonization.
@@ -75,7 +75,7 @@ This document outlines the three validation scenarios used to test the **Inspect
 6.  **Stage 6 (Access Control):** Architecture leaves paths `unencrypted`.
 7.  **Stage 7 (Egress):** Pipeline erroneously targets the public-facing `Open_Data_Portal`.
 
-### 💻 InspectR Output Performance
+### InspectR Output Performance
 *   **Status:** ❌ **FAIL**
 *   **Explanation:** CRITICAL COMPLIANCE FAILURE: Personally Identifiable Information (PII) from municipal databases cannot be exposed to a public target without active transformation layers.
 *   **Exact Evidence:** `input.data_type == "Personal_Data"` routing to `Open_Data_Portal` while Stage 5 protection count equals 0.
@@ -87,12 +87,12 @@ This document outlines the three validation scenarios used to test the **Inspect
 
 ## 3. Test Case 3: The "HUMAN" Scenario (Conditional Data Governance Triage)
 
-### 📋 MUNDAT Context Mapping
+### MUNDAT Context Mapping
 *   **Dataset:** `Sickleave` HR Dataset (Requested by academic research teams for algorithmic data innovation).
 *   **User Story:** **TK.US.03 / TK.US.04 / TK.US.11** (Compliance Process Owner managing data-sharing contracts and verifying legal/ethical boundaries before formal delivery).
 *   **Functional Requirement:** **TK.FR.04 / TK.FR.14** (System must flag conditional issues requiring complex contract evaluation or high-level management verification).
 
-### 🛠️ 7-Stage Pipeline Configuration
+### 7-Stage Pipeline Configuration
 1.  **Stage 1 (Ingest):** Connected to `HR_System_Age_Distribution`.
 2.  **Stage 2 (Triage):** `classification` set to `academic_request`.
 3.  **Stage 3 (Pre-Processing):** Running data cleaning and structural interpretation.
@@ -102,7 +102,7 @@ This document outlines the three validation scenarios used to test the **Inspect
 7.  **Stage 7 (Egress):** Pipeline targets a restricted `Secure_Controlled_Vault`.
 8.  **Metadata Defect:** The crucial field `contract_verified` is toggled to `false`.
 
-### 💻 InspectR Output Performance
+### InspectR Output Performance
 *   **Status:** ⚠️ **HUMAN**
 *   **Explanation:** CONDITIONAL HOLD: The structural architecture of the data pipeline handles masking and encryption rules correctly, but missing legal clearance tokens prevent automated authorization.
 *   **Exact Evidence:** `input.data_type == "Personal_Data"` with active masking routing to a protected vault, but metadata token validation fails (`input.metadata.contract_verified == false`).
@@ -139,22 +139,16 @@ This document outlines the three validation scenarios used to test the **Inspect
    OK / FAIL / HUMAN
    ```
 
-5. **InspectR = COMPLIANCE ENGINE around this process**
-
-   InspectR supplies the blueprint and Rego policy to OPA and presents the resulting **status + evidence + reason + rule reference + remedy**.
-
 ![Architecture diagram](https://github.com/user-attachments/assets/b5a0fdb4-8da4-4e42-b50c-b0fb126dc812)
 ![Architecture diagram](https://github.com/user-attachments/assets/f8edb06e-723b-495f-ab9b-33f7d579591d)
 
-### Technology
-`Python` · `Plotly` · `Pandas` · `JSON` · `PaC` · `Open Policy Agent (OPA)` · `Rego` · `inLUMEN`
 
 ### Repository Structure
 
 ```text
 inspectr-poc/
-├── app.py          # Streamlit application
-├── data/           # Pipeline blueprints and supporting data
+├── app.py          # Application entry point
+├── data/           # Pipeline blueprints, datasets and supporting files
 ├── pages/          # InspectR interface and subpages, taxonomy
 ├── policies/       # Rego Policy-as-Code rules
 ├── src/            # Evaluation/integration logic
