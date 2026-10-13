@@ -8,10 +8,10 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 > Design-time compliance checking is not about determining whether a violation will happen. It is about determining whether the system is capable of complying when it runs. 
 
-> Compliance requirements are typically categorised as:
+> Compliance can be categorised as:
 >
-> - **Structural requirements**: The organisational and technical structures that must be in place to ensure compliance.
-> - **Runtime requirements**: The conditions and constraints that must be met during the operation of the system.
+> - **Structural**: The organisational and technical structures that must be in place to ensure compliance.
+> - **Runtime**: The conditions and constraints that must be met during the operation of the system.
 
 ## Research Question
 Which legal requirements can be transformed into inspectable architectural properties, what evidence is required to assess them, and how much assurance does design-time inspection provide compared to runtime auditing?
