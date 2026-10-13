@@ -6,7 +6,7 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 
 > InspectR investigates the boundaries of compliance automation and how regulatory requirements can be operationalised into traceable, evidence-bound, machine-checkable design-time policies.
 
-## 1. Core Research Profile
+## 1. Research Profile
 | | |
 | :--- | :--- |
 | **Research Frontier** | Compliance automation - translating legal documents into deterministic software logic |
@@ -35,7 +35,7 @@ This document outlines the three validation scenarios used to test the **Inspect
 
 ---
 
-## 1. Test Case 1: The "PASS" Scenario (Environmental Open Data)
+## 1. TK Test Case 1: The "PASS" Scenario 
 
 ### MUNDAT Context Mapping
 *   **Dataset:** `IoT` Stormwater Basin Sensors (Time-series data, size ~50 MB, contains no personal data, under an Open License).
@@ -59,7 +59,7 @@ This document outlines the three validation scenarios used to test the **Inspect
 
 ---
 
-## 2. Test Case 2: The "FAIL" Scenario (Critical PII Exposure)
+## 2. TK Test Case 2: The "FAIL" Scenario (Critical PII Exposure)
 
 ### MUNDAT Context Mapping
 *   **Dataset:** `Sickleave` HR Dataset (Aggregated demographic and monthly rotation survey records containing indirect PII).
@@ -85,7 +85,7 @@ This document outlines the three validation scenarios used to test the **Inspect
 
 ---
 
-## 3. Test Case 3: The "HUMAN" Scenario (Conditional Data Governance Triage)
+## 3. TK Test Case 3: The "HUMAN" Scenario (Conditional Data Governance Triage)
 
 ### MUNDAT Context Mapping
 *   **Dataset:** `Sickleave` HR Dataset (Requested by academic research teams for algorithmic data innovation).
