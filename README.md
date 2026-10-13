@@ -41,18 +41,12 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 | :--- | :--- | :--- |
 | **Operational Phase** | Pre-deployment, architectural design, blueprint generation. | Post-deployment, active execution phase. |
 | **Primary Target** | Topology graphs, metadata contracts, structural data flow mappings. | Live data payloads, execution traces, dynamic traffic interception. |
-| **Core Analogy** | Installing a fire alarm blueprint before building occupancy. | Extinguishing an active fire or checking smoke particles. |
+| **Analogy** | Installing a fire alarm before building occupancy. | Extinguishing an active fire |
 | **Tooling & Paradigm** | Static analysis, Policy-as-Code (OPA/Rego). | Sidecar proxies, runtime instrumentation, dynamic monitoring. |
 | **Academic Alignment** | Systems Architecture (structural constraints & metadata contracts). | Distributed networking and security operations. |
 
 
 # USE CASE: MUNDAT (TK UC) 
-This PoC uses the **MUNDAT: Trondheim Kommune (TK) use case** and selected provisions of the **GDPR** to demonstrate the approach.The PoC evaluates a static **inLUMEN TK pipeline blueprint** directly against independently defined **Rego policies** using **Open Policy Agent (OPA)**.
-
-This document outlines the three validation scenarios used to test the **InspectR** policy engine. It demonstrates how a generic **7-stage *inLUMEN* pipeline design** maps directly to the datasets, user stories, and requirements of the **Trondheim MUNDAT** use case.
-
----
-
 ## 1. TK Test Case 1: The "PASS" Scenario 
 
 ### MUNDAT Context Mapping
