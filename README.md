@@ -48,7 +48,7 @@ Which legal requirements can be transformed into inspectable architectural prope
 4. **OPA Engine**: Evaluates blueprint evidence against Rego rules.
 5. **InspectR Engine**: Orchestrates evaluation and outputs status, evidence, reasons, rule references, and remedies.
 
-![InspectR Architecture Overview](./images/arch-inspectr.png)
+![InspectR Architecture Overview](./images/arch-inspectr.jpeg)
 
 ## Why desing-time compliance?
 
