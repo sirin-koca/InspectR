@@ -28,6 +28,37 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 - **Compliance** is the ongoing execution and proof that the organisation is actually following both the internal policies and external laws.
 
 
+## Main Components
+
+1. **Pipeline blueprint = EVIDENCE**
+
+   The inLUMEN JSON contains the design-time facts InspectR can inspect.
+
+2. **Organisational policy = CONDITION / REQUIREMENT**
+
+   It defines what evidence is expected and what should count as acceptable, unacceptable, or insufficient.
+
+3. **Rego = EXECUTABLE REPRESENTATION OF THAT POLICY**
+
+   The organisational policy conditions are encoded as machine-executable Rego rules.
+
+4. **OPA = EVALUATOR**
+
+   OPA takes:
+
+   ```text
+   Pipeline blueprint (evidence)
+           +
+   Rego rules (encoded policy)
+           ↓
+        evaluates
+           ↓
+   OK / FAIL / HUMAN
+   ```
+
+![Architecture diagram](https://github.com/user-attachments/assets/b5a0fdb4-8da4-4e42-b50c-b0fb126dc812)
+![Architecture diagram](https://github.com/user-attachments/assets/f8edb06e-723b-495f-ab9b-33f7d579591d)
+
 # USE CASE: MUNDAT (TK UC) 
 This PoC uses the **MUNDAT: Trondheim Kommune (TK) use case** and selected provisions of the **GDPR** to demonstrate the approach.The PoC evaluates a static **inLUMEN TK pipeline blueprint** directly against independently defined **Rego policies** using **Open Policy Agent (OPA)**.
 
@@ -109,38 +140,6 @@ This document outlines the three validation scenarios used to test the **Inspect
 *   **Remedy Suggestion:** 
     *   *Human-Readable:* "Triage this design to the Compliance Process Owner and Data Protection Officer to verify the physical data-sharing contract and apply the approved contract token."
     *   *Machine-Readable:* `{"action": "triage_to_governance", "required_roles": ["Compliance_Process_Owner", "Data_Protection_Officer"]}`
-
-
-### Components
-
-1. **Pipeline blueprint = EVIDENCE**
-
-   The inLUMEN JSON contains the design-time facts InspectR can inspect.
-
-2. **Organisational policy = CONDITION / REQUIREMENT**
-
-   It defines what evidence is expected and what should count as acceptable, unacceptable, or insufficient.
-
-3. **Rego = EXECUTABLE REPRESENTATION OF THAT POLICY**
-
-   The organisational policy conditions are encoded as machine-executable Rego rules.
-
-4. **OPA = EVALUATOR**
-
-   OPA takes:
-
-   ```text
-   Pipeline blueprint (evidence)
-           +
-   Rego rules (encoded policy)
-           ↓
-        evaluates
-           ↓
-   OK / FAIL / HUMAN
-   ```
-
-![Architecture diagram](https://github.com/user-attachments/assets/b5a0fdb4-8da4-4e42-b50c-b0fb126dc812)
-![Architecture diagram](https://github.com/user-attachments/assets/f8edb06e-723b-495f-ab9b-33f7d579591d)
 
 
 ### Repository Structure
