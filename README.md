@@ -18,7 +18,7 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 | **Architectural Context** | Policy-as-Code, Open Policy Agent (OPA), LLM-generated data pipeline structures and multi-agent workflows (e.g., policy interpreter agents, remedy generator agents). |
 | **Technical Stack** | Python, Plotly, Pandas, JSON, Policy-as-Code, Open Policy Agent (OPA), Rego, inLUMEN, Streamlit |
 | **Industrial Context** | SINTEF Digital, DataPACT |
-| **Legal Domain** | 1️⃣ Privacy and GDPR with Use Case #1: MUNDAT, 2️⃣ EU AI Act (AIA) with Use Case #2 |
+| **Legal Domain** | 1️⃣ Privacy and GDPR, Use Case 1: MUNDAT TK UC, 2️⃣ EU AI Act (AIA) with Use Case 2 |
 
 ---
 
@@ -46,7 +46,7 @@ _**Thesis Title:** Architecting a Policy Engine for AI/data Operations and Pipel
 | **Tooling & Paradigm** | Static analysis, Policy-as-Code (OPA/Rego). | Sidecar proxies, runtime instrumentation, dynamic monitoring. |
 | **Academic Alignment** | Systems Architecture (structural constraints & metadata contracts). | Distributed networking and security operations. |
 
-## USE CASE #1: MUNDAT (TK UC)
+## USE CASE 1: MUNDAT (TK UC)
 
 3 different test scenarios to demonstrate InspectR's design-time compliance evaluation capabilities: PASS/ FAIL / HUMAN
 
