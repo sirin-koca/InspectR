@@ -7,7 +7,7 @@ from pathlib import Path
 # INSPECTR EVALUATOR
 # =========================================================
 
-POLICY_PATH = Path("policies/policy.rego")
+POLICY_PATH = Path("policies/tk")
 OPA_QUERY = "data.inspectr.results"
 
 
@@ -155,7 +155,7 @@ def evaluate(blueprint: dict) -> list[dict]:
                 + ", ".join(sorted(missing_fields))
             )
 
-        if result["status"] not in {"OK", "FAIL", "HUMAN"}:
+        if result["status"] not in {"PASS", "FAIL", "HUMAN"}:
             raise RuntimeError(
                 f"Invalid InspectR status: {result['status']}"
             )

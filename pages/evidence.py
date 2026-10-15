@@ -4,15 +4,15 @@ import streamlit as st
 
 st.subheader("Evidence Traceability")
 st.caption(
-    "This page documents where each InspectR rule obtains its design-time "
-    "evidence and how the evidence produces a result."
+    "Each active rule identifies the blueprint evidence it reads and the "
+    "design-time conclusion it is allowed to make."
 )
 
 st.info(
     """
     **Input evidence** is read from the uploaded JSON blueprint. **Derived
-    evidence** is calculated by Rego from that input. The JSON selectors below
-    identify the source of the evidence; they are not precomputed results.
+    evidence** is calculated by Rego from that input. A result confirms only
+    the encoded design-time control; it is not a legal determination.
     """
 )
 
@@ -26,158 +26,75 @@ def render_rule_table(rows: list[dict]) -> None:
 
 rules = [
     {
-        "id": "TK-STRUCT-01",
-        "title": "Pipeline structure",
-        "reference": "MUNDAT pipeline structure; supporting operational proxy for GDPR Article 25",
+        "id": "TK-001",
+        "title": "DPIA requirement and completion",
+        "reference": "GDPR Article 35; TK/MUNDAT risk-assessment operationalisation",
         "rows": [
-            {
-                "Traceability item": "Input evidence",
-                "Definition": "Node labels and connection endpoints in the uploaded blueprint.",
-            },
-            {
-                "Traceability item": "JSON selector",
-                "Definition": "pipeline.nodes[*].label; pipeline.connections[*].from; pipeline.connections[*].to",
-            },
-            {
-                "Traceability item": "Evaluation",
-                "Definition": "Checks the seven required stages and six expected connections.",
-            },
-            {
-                "Traceability item": "Result",
-                "Definition": "OK when the required stages and connections match; otherwise FAIL.",
-            },
-            {
-                "Traceability item": "Remedy",
-                "Definition": "Add missing stages or connect the stages in the documented order.",
-            },
-            {
-                "Traceability item": "Boundary",
-                "Definition": "Checks declared graph structure, not runtime behaviour or complete privacy-by-design compliance.",
-            },
+            ("Applicability", "A data_source contains personal and special-category data."),
+            ("Input selectors", "pipeline.nodes[*].type; pipeline.nodes[*].properties.contains_personal_data; pipeline.nodes[*].properties.contains_special_category_data; pipeline.nodes[*].properties.dpia_completed"),
+            ("PASS", "No DPIA trigger exists, or a required DPIA is declared complete."),
+            ("FAIL", "A DPIA is required and a compliance gate declares it incomplete."),
+            ("Boundary", "Does not assess DPIA quality, approval, or legal adequacy."),
         ],
     },
     {
-        "id": "TK-DATA-01",
-        "title": "Data-source provenance and approval",
-        "reference": "MUNDAT data-source and provenance requirement; partial operational support for GDPR Article 30",
+        "id": "TK-002",
+        "title": "Special-category data risk assessment",
+        "reference": "GDPR Articles 9 and 35; TK/MUNDAT risk operationalisation",
         "rows": [
-            {
-                "Traceability item": "Input evidence",
-                "Definition": "Source-node compliance metadata: source identifier and approval declaration.",
-            },
-            {
-                "Traceability item": "JSON selector",
-                "Definition": "pipeline.nodes[*][kind=source].compliance_extensions.source_id; pipeline.nodes[*][kind=source].compliance_extensions.approved_source",
-            },
-            {
-                "Traceability item": "Evaluation",
-                "Definition": "Checks that every source has a non-empty source_id and approved_source is true.",
-            },
-            {
-                "Traceability item": "Result",
-                "Definition": "OK when all source nodes satisfy both conditions; otherwise FAIL.",
-            },
-            {
-                "Traceability item": "Remedy",
-                "Definition": "Add or correct the source identifier and approval evidence.",
-            },
-            {
-                "Traceability item": "Boundary",
-                "Definition": "Does not verify the source, approval authority, legal basis, or factual truth of the declaration.",
-            },
+            ("Applicability", "A data_source contains special-category data."),
+            ("Input selectors", "pipeline.nodes[*].properties.contains_special_category_data; pipeline.nodes[*].properties.risk_assessment_completed"),
+            ("PASS", "No special-category source exists, or assessment is complete."),
+            ("FAIL", "Special-category data exists and assessment is explicitly incomplete."),
+            ("Boundary", "Does not evaluate risk content, mitigations, or residual risk."),
         ],
     },
     {
-        "id": "TK-TRACE-01",
-        "title": "Processing traceability",
-        "reference": "MUNDAT logging and traceability requirement; partial operational support for GDPR Article 30",
+        "id": "TK-003",
+        "title": "Data-sharing agreement",
+        "reference": "GDPR Articles 5, 6, and 28; TK/MUNDAT sharing governance",
         "rows": [
-            {
-                "Traceability item": "Input evidence",
-                "Definition": "Logging declaration on every pipeline node.",
-            },
-            {
-                "Traceability item": "JSON selector",
-                "Definition": "pipeline.nodes[*].compliance_extensions.has_logging",
-            },
-            {
-                "Traceability item": "Evaluation",
-                "Definition": "Checks whether has_logging is true for every node.",
-            },
-            {
-                "Traceability item": "Result",
-                "Definition": "OK when all nodes declare logging; otherwise FAIL and the affected node labels are returned.",
-            },
-            {
-                "Traceability item": "Remedy",
-                "Definition": "Declare logging capability for every pipeline stage.",
-            },
-            {
-                "Traceability item": "Boundary",
-                "Definition": "Does not verify that logs are produced, complete, protected, or retained.",
-            },
+            ("Applicability", "Personal data is processed and a data_transfer node exists."),
+            ("Input selectors", "pipeline.nodes[*].properties.contains_personal_data; pipeline.nodes[*].type == data_transfer; pipeline.nodes[*].properties.data_sharing_agreement_exists"),
+            ("PASS", "Transfer is not triggered, or agreement evidence is true."),
+            ("FAIL", "Personal-data transfer is triggered and agreement evidence is false."),
+            ("Boundary", "Does not verify the external agreement or its legal validity."),
         ],
     },
     {
-        "id": "TK-RISK-01",
-        "title": "DPIA and risk-assessment checkpoint",
-        "reference": "MUNDAT DPIA and risk-assessment requirement; checkpoint-presence proxy for GDPR Article 35",
+        "id": "TK-004",
+        "title": "Data lineage and provenance",
+        "reference": "GDPR Articles 5(2) and 30; TK/MUNDAT traceability",
         "rows": [
-            {
-                "Traceability item": "Input evidence",
-                "Definition": "Presence of the dedicated compliance and risk-check stage.",
-            },
-            {
-                "Traceability item": "JSON selector",
-                "Definition": "pipeline.nodes[*].label == \"run_compliance_checks\"",
-            },
-            {
-                "Traceability item": "Evaluation",
-                "Definition": "Checks whether a node with the exact label run_compliance_checks exists.",
-            },
-            {
-                "Traceability item": "Result",
-                "Definition": "OK when the checkpoint exists; otherwise FAIL.",
-            },
-            {
-                "Traceability item": "Remedy",
-                "Definition": "Add a stage for the documented compliance, DPIA, and risk checks.",
-            },
-            {
-                "Traceability item": "Boundary",
-                "Definition": "Does not determine whether a DPIA is required, completed, accurate, or legally adequate.",
-            },
+            ("Applicability", "A data_integration node exists."),
+            ("Input selectors", "pipeline.nodes[*].type == data_integration; pipeline.nodes[*].properties.lineage_available"),
+            ("PASS", "No integration node exists, or lineage is available."),
+            ("FAIL", "An integration node explicitly lacks lineage."),
+            ("Boundary", "Does not verify lineage quality, completeness, or runtime generation."),
         ],
     },
     {
-        "id": "TK-HUMAN-01",
-        "title": "Human review before sharing",
-        "reference": "MUNDAT sharing-decision review requirement; TK/MUNDAT governance safeguard",
+        "id": "TK-005",
+        "title": "Purpose compatibility",
+        "reference": "GDPR Articles 5(1)(b) and 6(4); TK/MUNDAT governance review",
         "rows": [
-            {
-                "Traceability item": "Input evidence",
-                "Definition": "Human-oversight declaration on the sharing-decision stage.",
-            },
-            {
-                "Traceability item": "JSON selector",
-                "Definition": "pipeline.nodes[*][label=prepare_sharing_decision].compliance_extensions.human_oversight",
-            },
-            {
-                "Traceability item": "Evaluation",
-                "Definition": "true means explicit review evidence; false means review is disabled; missing means evidence is insufficient.",
-            },
-            {
-                "Traceability item": "Result",
-                "Definition": "OK for true, FAIL for false, and HUMAN when the field is missing.",
-            },
-            {
-                "Traceability item": "Remedy",
-                "Definition": "Declare human review or an override checkpoint before sharing.",
-            },
-            {
-                "Traceability item": "Boundary",
-                "Definition": "Does not verify that review occurs in practice or establish complete GDPR compliance.",
-            },
+            ("Applicability", "A compliance_gate provides purpose-compatibility evidence."),
+            ("Input selectors", "pipeline.nodes[*].type == compliance_gate; pipeline.nodes[*].properties.purpose_compatible"),
+            ("PASS", "Purpose compatibility is explicitly true."),
+            ("HUMAN", "Purpose compatibility is missing, false, or inconclusive."),
+            ("Boundary", "Does not perform contextual legal purpose analysis."),
+        ],
+    },
+    {
+        "id": "TK-006",
+        "title": "Complete sharing safeguards",
+        "reference": "GDPR Articles 25 and 32; TK/MUNDAT sharing safeguards",
+        "rows": [
+            ("Applicability", "A sharing workflow contains the required safeguard nodes."),
+            ("Input selectors", "dpia_check.dpia_completed; dpia_check.risk_assessment_completed; sharing_assessment.data_sharing_agreement_exists; sharing_assessment.recipient_approved; share_dataset.encrypted_in_transit"),
+            ("PASS", "All five safeguards are explicitly true."),
+            ("FAIL", "One or more safeguards are missing or false."),
+            ("Boundary", "Does not verify that safeguards operate correctly at runtime."),
         ],
     },
 ]
@@ -185,10 +102,9 @@ rules = [
 for rule in rules:
     st.markdown(f"#### {rule['id']} — {rule['title']}")
     st.caption(rule["reference"])
-    render_rule_table(rule["rows"])
-
-st.caption(
-    "The displayed evidence is traceable to blueprint selectors and Rego "
-    "conditions. A rule result confirms only the encoded design-time control; "
-    "it is not a legal determination."
-)
+    render_rule_table(
+        [
+            {"Traceability item": item, "Definition": definition}
+            for item, definition in rule["rows"]
+        ]
+    )

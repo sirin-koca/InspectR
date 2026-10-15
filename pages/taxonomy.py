@@ -152,7 +152,7 @@ overview_df = pd.DataFrame([
     {
         "Level": "Rule metadata",
         "Meaning": "Rule ID, evidence fields, legal basis, and relationship type",
-        "Example": "TK-TRACE-01; compliance_extensions.has_logging",
+        "Example": "TK-006; share_dataset.properties.encrypted_in_transit",
     },
 ])
 

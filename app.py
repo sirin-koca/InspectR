@@ -63,7 +63,7 @@ if "evaluation_results" not in st.session_state:
 pages = [
     st.Page("pages/research.py", title=":: Research"),
     st.Page("pages/main.py", title=":: InspectR", default=True),
-    st.Page("pages/overview.py", title=":: Overview"),
+    st.Page("pages/datapipeline.py", title=":: Datapipeline"),
     st.Page("pages/pac.py", title=":: Engineering PaC"),
     st.Page("pages/tk_uc.py", title=":: Use Case"),
     st.Page("pages/taxonomy.py", title=":: Taxonomy"),

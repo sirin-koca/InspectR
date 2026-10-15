@@ -1,0 +1,190 @@
+{
+  "pipeline": {
+    "id": "tk_mundat_data_sharing_v1",
+    "name": "Municipal Data Sharing Workflow",
+    "description": "Compliance-enriched design-time blueprint for InspectR PoC",
+
+    "nodes": [
+      {
+        "id": "request",
+        "type": "request_intake",
+        "properties": {
+          "request_id": "required",
+          "requester_identity": true,
+          "purpose_specified": true,
+          "legal_basis_documented": true
+        }
+    },
+
+    {
+      "id": "classify_request",
+      "type": "assessment",
+      "properties": {
+        "personal_data_expected": true,
+        "special_category_data": false,
+        "children_data": false,
+        "purpose_defined": true
+      }
+    },
+
+    {
+      "id": "dpia_check",
+      "type": "compliance_gate",
+      "properties": {
+        "dpia_required": true,
+        "dpia_completed": true,
+        "risk_assessment_completed": true,
+        "evidence_required": true
+      }
+    },
+
+    {
+      "id": "citizen_registry",
+      "type": "data_source",
+      "properties": {
+        "contains_personal_data": true,
+        "data_owner_defined": true,
+        "retention_policy_defined": true
+      }
+    },
+
+    {
+      "id": "health_services",
+      "type": "data_source",
+      "properties": {
+        "contains_personal_data": true,
+        "contains_special_category_data": true,
+        "data_owner_defined": true
+      }
+    },
+
+    {
+      "id": "education_system",
+      "type": "data_source",
+      "properties": {
+        "contains_personal_data": true,
+        "contains_children_data": true
+      }
+    },
+
+    {
+      "id": "extract_data",
+      "type": "data_processing",
+      "properties": {
+        "purpose_limited": true,
+        "data_minimisation_applied": true,
+        "logging_enabled": true
+      }
+    },
+
+    {
+      "id": "integrate_dataset",
+      "type": "data_integration",
+      "properties": {
+        "lineage_available": true,
+        "provenance_recorded": true,
+        "schema_documented": true
+      }
+    },
+
+    {
+      "id": "anonymisation",
+      "type": "privacy_control",
+      "properties": {
+        "anonymisation_applied": true,
+        "reidentification_risk_assessed": true
+      }
+    },
+
+    {
+      "id": "sharing_assessment",
+      "type": "compliance_gate",
+      "properties": {
+        "purpose_compatible": true,
+        "contract_available": true,
+        "recipient_approved": true,
+        "data_sharing_agreement_exists": true
+      }
+    },
+
+    {
+      "id": "share_dataset",
+      "type": "data_transfer",
+      "properties": {
+        "encrypted_in_transit": true,
+        "approved_recipient": true,
+        "audit_trail_enabled": true
+      }
+    }
+  ],
+
+"connections": [
+    {
+      "from": "request",
+      "to": "classify_request",
+      "flow_type": "control"
+    },
+    {
+      "from": "classify_request",
+      "to": "dpia_check",
+      "flow_type": "control"
+    },
+
+    {
+      "from": "dpia_check",
+      "to": "citizen_registry",
+      "flow_type": "authorisation"
+    },
+    {
+      "from": "dpia_check",
+      "to": "health_services",
+      "flow_type": "authorisation"
+    },
+    {
+      "from": "dpia_check",
+      "to": "education_system",
+      "flow_type": "authorisation"
+    },
+
+    {
+      "from": "citizen_registry",
+      "to": "extract_data",
+      "flow_type": "data"
+    },
+    {
+      "from": "health_services",
+      "to": "extract_data",
+      "flow_type": "data"
+    },
+    {
+      "from": "education_system",
+      "to": "extract_data",
+      "flow_type": "data"
+    },
+
+    {
+      "from": "extract_data",
+      "to": "integrate_dataset",
+      "flow_type": "data"
+    },
+
+    {
+      "from": "integrate_dataset",
+      "to": "anonymisation",
+      "flow_type": "data"
+    },
+
+    {
+      "from": "anonymisation",
+      "to": "sharing_assessment",
+      "flow_type": "data"
+    },
+
+    {
+      "from": "sharing_assessment",
+      "to": "share_dataset",
+      "flow_type": "approval"
+    }
+    ]
+  }
+}

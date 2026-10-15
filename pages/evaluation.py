@@ -7,17 +7,8 @@ import streamlit as st
 from src.evaluator import evaluate
 
 
-RULE_ORDER = [
-    "TK-STRUCT-01",
-    "TK-DATA-01",
-    "TK-TRACE-01",
-    "TK-RISK-01",
-    "TK-HUMAN-01",
-]
-
-
 def status_counts(results: list[dict]) -> str:
-    counts = {status: 0 for status in ("OK", "FAIL", "HUMAN")}
+    counts = {status: 0 for status in ("PASS", "FAIL", "HUMAN")}
     for result in results:
         counts[result["status"]] += 1
     return " · ".join(f"{status}: {counts[status]}" for status in counts)
@@ -25,7 +16,7 @@ def status_counts(results: list[dict]) -> str:
 
 def status_message(status: str) -> str:
     return {
-        "OK": "🟢 OK",
+        "PASS": "🟢 PASS",
         "FAIL": "🔴 FAIL",
         "HUMAN": "🟠 HUMAN",
     }.get(status, f"⚪ {status}")
@@ -34,7 +25,7 @@ def status_message(status: str) -> str:
 def render_evidence(evidence: dict) -> None:
     input_evidence = evidence.get("input_evidence", [])
     if input_evidence:
-        st.write("**Input evidence from the uploaded blueprint**")
+        st.caption("Input evidence")
         rows = []
         for item in input_evidence:
             if "fields" in item:
@@ -63,27 +54,54 @@ def render_evidence(evidence: dict) -> None:
             pd.DataFrame(rows),
             use_container_width=True,
             hide_index=True,
+            height=min(240, 80 + len(rows) * 35),
+            column_config={
+                "Blueprint selector": st.column_config.TextColumn(
+                    "Blueprint selector",
+                    width="large",
+                ),
+                "Observed": st.column_config.TextColumn(width="small"),
+                "Expected": st.column_config.TextColumn(width="small"),
+                "Condition": st.column_config.TextColumn(width="large"),
+            },
         )
 
     derived_evidence = evidence.get("derived_evidence")
     if derived_evidence:
-        st.write("**Derived evidence calculated by Rego**")
+        st.caption("Derived evidence calculated by Rego")
         st.json(derived_evidence)
 
 
 def render_results(results: list[dict]) -> None:
-    st.caption(status_counts(results))
+    counts = {status: 0 for status in ("PASS", "FAIL", "HUMAN")}
+    for result in results:
+        counts[result["status"]] += 1
+
+    summary_columns = st.columns(3)
+    for column, status in (
+        (summary_columns[0], "PASS"),
+        (summary_columns[1], "FAIL"),
+        (summary_columns[2], "HUMAN"),
+    ):
+        with column:
+            st.metric(status, counts[status])
+
+    st.caption(
+        " · ".join(
+            f"{status}: {counts[status]}"
+            for status in ("PASS", "FAIL", "HUMAN")
+        )
+    )
     for result in results:
         with st.expander(
             f"{status_message(result['status'])} — {result['rule']}"
         ):
-            st.write(f"**Legal reference:** {result['legal_reference']}")
-            st.write(result["reason"])
-            st.write("**Evidence**")
-            render_evidence(result["evidence"])
+            st.caption(result["legal_reference"])
+            st.markdown(result["reason"])
+            with st.container(border=True):
+                render_evidence(result["evidence"])
             if result["remedy"]:
-                st.write("**Remedy**")
-                st.write(result["remedy"])
+                st.info(f"**Remedy**  \n{result['remedy']}")
 
 
 def load_uploaded_blueprint(uploaded_file) -> dict:
@@ -108,229 +126,93 @@ def uploaded_file_signature(uploaded_file) -> str:
 
 st.subheader("Evaluation")
 st.caption(
-    "Upload two static JSON pipeline blueprints and evaluate them independently "
-    "with the same InspectR Policy-as-Code rules in realtime."
+    "Upload one static JSON pipeline blueprint and evaluate it with the "
+    "InspectR Policy-as-Code rules."
 )
 
-col1, col2 = st.columns([1, 1])
-with col1:
-    st.info(
-    """
-    **How the experiment works?**
-
-    1. Upload the first JSON blueprint and run InspectR.
-    2. Upload the second JSON blueprint and run InspectR.
-    3. Inspect the two independent result sets side by side.
-    4. Compare results only after both live evaluations have completed.
-"""
-)
-
-with col2:
-    st.warning(
-    """
-    **Important note**
-    The evidence displayed by InspectR is generated during evaluation. 
-    Some evidence comes directly from fields in the uploaded blueprint, 
-    while other evidence is derived by the Rego policy when it inspects those fields.
-
-    - Input evidence: The actual field read from the uploaded JSON.
-    - Derived evidence: The conclusion or summary calculated by Rego.
-    - Evidence location: The JSON path and node to which the evidence belongs.
-    - Policy location: The rule and condition that evaluated it.
-   """
-)
-
-st.markdown("#### UPLOAD - EVALUATE - COMPARE")
-left, right = st.columns(2)
-
-with left:
-    st.markdown("**Blueprint 1**")
-    first_file = st.file_uploader(
-        "Upload the first JSON blueprint",
+with st.container(border=True):
+    st.markdown("#### Inspect a pipeline blueprint")
+    st.caption(
+        "Upload a JSON blueprint, then run the six TK/MUNDAT design-time rules."
+    )
+    uploaded_file = st.file_uploader(
+        "JSON blueprint",
         type=["json"],
-        key="comparison_blueprint_1",
+        key="evaluation_blueprint",
+        label_visibility="collapsed",
     )
-    if first_file is not None:
-        first_signature = uploaded_file_signature(first_file)
-        if st.session_state.get("comparison_signature_1") not in (
+
+    if uploaded_file is not None:
+        file_signature = uploaded_file_signature(uploaded_file)
+        if st.session_state.get("evaluation_signature") not in (
             None,
-            first_signature,
+            file_signature,
         ):
-            st.session_state.pop("comparison_results_1", None)
-            st.session_state.pop("comparison_name_1", None)
-        st.caption(first_file.name)
-        with st.expander("Preview uploaded JSON"):
+            st.session_state.pop("evaluation_results", None)
+            st.session_state.pop("evaluation_name", None)
+
+        try:
+            uploaded_blueprint = load_uploaded_blueprint(uploaded_file)
+        except ValueError as error:
+            uploaded_blueprint = None
+            st.error(str(error))
+
+        action_columns = st.columns([2, 1])
+        with action_columns[0]:
+            st.caption(f"Selected file: **{uploaded_file.name}**")
+        with action_columns[1]:
+            run_evaluation = st.button(
+                "Run InspectR",
+                type="primary",
+                use_container_width=True,
+                key="evaluate_blueprint",
+            )
+
+        if run_evaluation:
             try:
-                st.json(load_uploaded_blueprint(first_file))
-            except ValueError as error:
-                st.error(str(error))
-        if st.button(
-            "Run InspectR on blueprint 1",
-            type="primary",
-            use_container_width=True,
-            key="evaluate_comparison_blueprint_1",
-        ):
-            try:
-                blueprint = load_uploaded_blueprint(first_file)
-                with st.spinner("Evaluating blueprint 1 with InspectR..."):
-                    st.session_state["comparison_results_1"] = evaluate(blueprint)
-                st.session_state["comparison_name_1"] = first_file.name
-                st.session_state["comparison_signature_1"] = first_signature
-                st.success("Blueprint 1 evaluation complete.")
-            except (RuntimeError, ValueError) as error:
-                st.session_state.pop("comparison_results_1", None)
-                st.error(f"Blueprint 1 evaluation failed: {error}")
-    else:
-        st.session_state.pop("comparison_results_1", None)
-        st.session_state.pop("comparison_name_1", None)
-        st.session_state.pop("comparison_signature_1", None)
-
-with right:
-    st.markdown("**Blueprint 2**")
-    second_file = st.file_uploader(
-        "Upload the second JSON blueprint",
-        type=["json"],
-        key="comparison_blueprint_2",
-    )
-    if second_file is not None:
-        second_signature = uploaded_file_signature(second_file)
-        if st.session_state.get("comparison_signature_2") not in (
-            None,
-            second_signature,
-        ):
-            st.session_state.pop("comparison_results_2", None)
-            st.session_state.pop("comparison_name_2", None)
-        st.caption(second_file.name)
-        with st.expander("Preview uploaded JSON"):
-            try:
-                st.json(load_uploaded_blueprint(second_file))
-            except ValueError as error:
-                st.error(str(error))
-        if st.button(
-            "Run InspectR on blueprint 2",
-            type="primary",
-            use_container_width=True,
-            key="evaluate_comparison_blueprint_2",
-        ):
-            try:
-                blueprint = load_uploaded_blueprint(second_file)
-                with st.spinner("Evaluating blueprint 2 with InspectR..."):
-                    st.session_state["comparison_results_2"] = evaluate(blueprint)
-                st.session_state["comparison_name_2"] = second_file.name
-                st.session_state["comparison_signature_2"] = second_signature
-                st.success("Blueprint 2 evaluation complete.")
-            except (RuntimeError, ValueError) as error:
-                st.session_state.pop("comparison_results_2", None)
-                st.error(f"Blueprint 2 evaluation failed: {error}")
-    else:
-        st.session_state.pop("comparison_results_2", None)
-        st.session_state.pop("comparison_name_2", None)
-        st.session_state.pop("comparison_signature_2", None)
-
-results_1 = st.session_state.get("comparison_results_1")
-results_2 = st.session_state.get("comparison_results_2")
-name_1 = st.session_state.get("comparison_name_1", "Blueprint 1")
-name_2 = st.session_state.get("comparison_name_2", "Blueprint 2")
-
-if results_1 is not None or results_2 is not None:
-    st.divider()
-    st.markdown("#### Live evaluation results")
-    result_columns = st.columns(2)
-
-    for column, name, results in (
-        (result_columns[0], name_1, results_1),
-        (result_columns[1], name_2, results_2),
-    ):
-        with column:
-            st.markdown(f"**{name}**")
-            if results is None:
-                st.caption("Not evaluated yet.")
-            else:
-                render_results(results)
-
-if results_1 is not None and results_2 is not None:
-    st.divider()
-    st.markdown("#### Comparison of live evaluation results")
-    st.write(
-        "This comparison is generated from the two completed InspectR "
-        "evaluations. It does not contain expected or hard-coded statuses."
-    )
-
-    results_by_rule_1 = {result["rule"]: result for result in results_1}
-    results_by_rule_2 = {result["rule"]: result for result in results_2}
-    comparison_rows = []
-
-    for rule in RULE_ORDER:
-        status_1 = results_by_rule_1.get(rule, {}).get("status", "MISSING")
-        status_2 = results_by_rule_2.get(rule, {}).get("status", "MISSING")
-        comparison_rows.append(
-            {
-                "Rule": rule,
-                name_1: status_1,
-                name_2: status_2,
-                "Change": (
-                    "No change"
-                    if status_1 == status_2
-                    else f"{status_1} → {status_2}"
-                ),
-            }
-        )
-
-    st.dataframe(
-        pd.DataFrame(comparison_rows),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    st.markdown("##### Rule-level evidence comparison")
-    for rule in RULE_ORDER:
-        result_1 = results_by_rule_1.get(rule)
-        result_2 = results_by_rule_2.get(rule)
-        with st.expander(
-            f"{rule}: {(result_1 or {}).get('status', 'MISSING')} vs "
-            f"{(result_2 or {}).get('status', 'MISSING')}"
-        ):
-            evidence_columns = st.columns(2)
-            for column, name, result in (
-                (evidence_columns[0], name_1, result_1),
-                (evidence_columns[1], name_2, result_2),
-            ):
-                with column:
-                    st.markdown(
-                        f"**{name} — "
-                        f"{result.get('status', 'MISSING')}**"
+                if uploaded_blueprint is None:
+                    raise ValueError("Upload a valid JSON blueprint before evaluation.")
+                with st.spinner("Evaluating blueprint with InspectR..."):
+                    st.session_state["evaluation_results"] = evaluate(
+                        uploaded_blueprint
                     )
-                    if result:
-                        st.write(result["reason"])
-                        render_evidence(result["evidence"])
-                    else:
-                        st.caption("This rule did not return a result.")
+                st.session_state["evaluation_name"] = uploaded_file.name
+                st.session_state["evaluation_signature"] = file_signature
+                st.success("Blueprint evaluation complete.")
+            except (RuntimeError, ValueError) as error:
+                st.session_state.pop("evaluation_results", None)
+                st.error(f"Blueprint evaluation failed: {error}")
+    else:
+        st.caption("Choose a JSON blueprint to begin.")
+        st.session_state.pop("evaluation_results", None)
+        st.session_state.pop("evaluation_name", None)
+        st.session_state.pop("evaluation_signature", None)
 
-    st.info(
-        """
-        **How to read this comparison**
+results = st.session_state.get("evaluation_results")
+name = st.session_state.get("evaluation_name", "Uploaded blueprint")
 
-        The table compares the results produced by the same InspectR rules for
-        the two uploaded blueprints. A change means that the available
-        evidence in the files led to a different result; it does not mean that
-        the policy itself changed.
+if uploaded_file is not None and uploaded_blueprint is not None:
+    st.divider()
+    blueprint_column, results_column = st.columns([1, 1], gap="large")
 
-        - **OK** means that the evidence required by the encoded rule was found
-          and satisfied.
-        - **FAIL** means that the evidence was found but did not satisfy the
-          rule, or that the rule identified a negative condition.
-        - **HUMAN** means that the available evidence is insufficient for an
-          automated conclusion and requires human review.
+    with blueprint_column:
+        st.markdown("#### Blueprint JSON")
+        st.caption("The exact parsed input submitted to OPA.")
+        with st.container(border=True):
+            st.code(
+                json.dumps(uploaded_blueprint, indent=2, ensure_ascii=False),
+                language="json",
+                line_numbers=True,
+                wrap_lines=False,
+            )
 
-        The extended blueprint is intentionally designed to expose this
-        distinction. Its human-oversight evidence explicitly represents a
-        decision that still requires human attention, so InspectR must not
-        treat the result as automatically satisfied. This is an intentional
-        demonstration of how the evaluation surfaces a governance issue rather
-        than hiding it.
-
-        These are design-time results for the rules encoded in this PoC. They
-        explain what the submitted blueprint evidence supports, but they do
-        not establish complete legal or organisational compliance.
-        """
-    )
+    with results_column:
+        st.markdown(f"#### Results — `{name}`")
+        st.caption(
+            "Design-time findings from the active TK/MUNDAT policy. "
+            "Expand a rule to inspect its evidence and remedy."
+        )
+        if results is None:
+            st.info("Run InspectR to display the evaluation results.")
+        else:
+            render_results(results)
