@@ -17,7 +17,7 @@ clear, evidence-based findings.
 | Term | Definition |
 | --- | --- |
 | **Blueprint** | A machine-readable description of a planned data pipeline. |
-| **Compliance gate** | A checkpoint that must be completed before a sensitive activity continues. |
+| **Compliance gate** | A design checkpoint that must be defined before a sensitive activity can be approved for implementation. |
 | **Connection** | A link between two nodes showing how data, control or approval moves. |
 | **Data source** | A system or dataset from which the pipeline reads data. |
 | **Design-time compliance** | Checking a planned architecture before deployment or execution. |
@@ -76,7 +76,8 @@ request
 
 It includes:
 
-- two data sources: `health_services` and `citizen_registry`;
+- the **Sickleave** case dataset, assembled from the `health_services` and
+  `citizen_registry` source systems;
 - personal-data and special-category-data declarations;
 - schema fields, PII markers and masking strategies;
 - storage, encryption and retention metadata;
@@ -86,6 +87,13 @@ It includes:
 - an anonymisation step;
 - purpose, contract, recipient and agreement properties;
 - transfer encryption and audit-trail properties.
+
+The TK/MUNDAT source description identifies two example datasets: **Sickleave**
+and **IoT** stormwater sensor data. This v2 blueprint models the **Sickleave**
+scenario only. It does not model the IoT dataset, because the active rules focus
+on sensitive personal-data sharing. The names `health_services` and
+`citizen_registry` are source-system nodes used to build the Sickleave workflow,
+not alternative names for MUNDAT's two example datasets.
 
 ## 2. The nature of data pipelines
 
@@ -115,8 +123,8 @@ Each node has an `id`, a `type`, and `properties`:
   "id": "dpia_check",
   "type": "compliance_gate",
   "properties": {
-    "dpia_completed": true,
-    "risk_assessment_completed": true
+    "dpia_checkpoint_defined": true,
+    "risk_assessment_checkpoint_defined": true
   }
 }
 ```
@@ -138,7 +146,20 @@ Each node has an `id`, a `type`, and `properties`:
 | **Infrastructure metadata** | Where and how data is stored | Storage provider, encryption |
 | **Schema metadata** | The fields and sensitivity of a dataset | `employee_id` is PII |
 | **Connection / edge** | A relationship between two nodes | `from: extract_data` to `integrate_dataset` |
-| **Evidence property** | A value that a policy can inspect | `lineage_available: true` |
+| **Evidence property** | A value that a policy can inspect | `lineage_record_defined: true` |
+
+### Design-time meaning of blueprint values
+
+The blueprint describes a **planned** pipeline. Boolean values are therefore
+design declarations:
+
+- `true` means the design includes or requires the named checkpoint or control;
+- `false` means the design explicitly does not include it;
+- missing or `null` means the design does not provide enough information.
+
+For example, `dpia_checkpoint_defined: true` means that the blueprint includes
+a DPIA checkpoint. It does not mean that a DPIA has already been performed or
+approved. Runtime implementation and document review happen later.
 
 ## 3. Metadata Catalogue
 
@@ -147,7 +168,8 @@ the pipeline. It keeps the information needed to understand, govern and trace
 datasets in one place.
 
 It is needed because a blueprint value such as
-`lineage_available: true` only declares that lineage exists. The catalogue
+`lineage_record_defined: true` only declares that the design identifies a
+lineage record. The catalogue
 provides the records behind that declaration: sources, owners, schemas,
 sensitivity, transformations, outputs and versions.
 
@@ -167,8 +189,8 @@ itself a specific GDPR requirement and does not replace legal or runtime checks.
 | **Provenance** | `provenance:tk-mundat-sickleave-v2` | Processing activity, versions, timestamps and responsibility | Traceability and audit evidence |
 
 In the blueprint, these references appear on the `metadata_catalog`, data-source
-and `integrate_dataset` nodes. The current TK-004 rule still checks
-`lineage_available`; future policy versions can additionally verify that the
+and `integrate_dataset` nodes. The current TK-004 rule checks
+`lineage_record_defined`; future policy versions can additionally verify that the
 catalogue and lineage references are present and complete.
 
 ## 4. InspectR flow
@@ -199,122 +221,127 @@ No intermediate representation is used in this proof of concept.
 The rules do not read legal documents or inspect the running pipeline. They
 inspect the structure and properties declared in the blueprint.
 
-### Result meanings
+### How to read the rule matrix
 
-| Result | Meaning |
+Each rule has its own decision logic. **Not every rule can return all three
+statuses**:
+
+| Status | Simple meaning |
 | --- | --- |
-| **PASS** | The expected control is declared, or the rule is not applicable. |
-| **FAIL** | A required control is explicitly false or missing under that rule's logic. |
-| **HUMAN** | The available metadata is not enough for a safe automated decision. |
+| **PASS** | The required control is declared, or the rule is not triggered. |
+| **FAIL** | The rule finds an applicable control that is explicitly false. TK-006 also fails for missing values. |
+| **HUMAN** | The rule cannot safely decide from metadata and requires human review. Currently only TK-005 uses this status. |
+
+The matrix for each rule below shows exactly what each possible outcome means.
 
 ### TK-001 — DPIA required
 
-**What it checks:** Whether sensitive personal-data processing has a completed
-DPIA.
+**What it checks:** Whether sensitive personal-data processing has a defined
+DPIA checkpoint.
 
 **Logic:**
 
 ```text
 personal data + special-category data
-        -> DPIA required
-        -> dpia_completed must be true
+        -> DPIA checkpoint required
+        -> dpia_checkpoint_defined must be true
 ```
 
-| Scenario | Result |
-| --- | --- |
-| A source contains personal and special-category data, and a gate says `dpia_completed: true`. | **PASS** |
-| A source contains personal and special-category data, and a gate says `false`. | **FAIL** |
-| No data source is marked as both personal and special-category data. | **PASS** because this rule sees no DPIA trigger. |
+| Status | When TK-001 returns it | Simple interpretation |
+| --- | --- | --- |
+| **PASS** | A source contains personal and special-category data and a compliance gate says `dpia_checkpoint_defined: true`; **or** no source is marked as both. | The design includes a DPIA checkpoint, or this rule sees no DPIA trigger. |
+| **FAIL** | A sensitive source exists and a compliance gate explicitly says `dpia_checkpoint_defined: false`. | A DPIA checkpoint is needed but is not defined in the design. |
+| **HUMAN** | Not produced by the current TK-001 Rego rule. | Human review is not separately represented for this rule. |
 
-**What PASS proves:** The blueprint declares the DPIA control. It does not
-verify the DPIA's content or quality.
+**What PASS proves:** The blueprint declares a DPIA checkpoint. It does not
+prove that a DPIA has been completed or assess its content.
 
 ### TK-002 — Risk assessment
 
-**What it checks:** Whether special-category data has a completed risk assessment.
+**What it checks:** Whether special-category data has a defined risk-assessment
+checkpoint.
 
 **Logic:**
 
 ```text
 special-category data present
-        -> risk assessment required
-        -> risk_assessment_completed must be true
+        -> risk-assessment checkpoint required
+        -> risk_assessment_checkpoint_defined must be true
 ```
 
-| Scenario | Result |
-| --- | --- |
-| Special-category data exists and the gate says `risk_assessment_completed: true`. | **PASS** |
-| Special-category data exists and the gate says `false`. | **FAIL** |
-| No source is marked as containing special-category data. | **PASS** because this rule is not triggered. |
+| Status | When TK-002 returns it | Simple interpretation |
+| --- | --- | --- |
+| **PASS** | Special-category data exists and a gate says `risk_assessment_checkpoint_defined: true`; **or** no special-category source exists. | The design includes a risk-assessment checkpoint, or this rule is not triggered. |
+| **FAIL** | Special-category data exists and a compliance gate explicitly says `risk_assessment_checkpoint_defined: false`. | Sensitive data is present but the risk-assessment checkpoint is not defined. |
+| **HUMAN** | Not produced by the current TK-002 Rego rule. | Human review is not separately represented for this rule. |
 
-**What PASS proves:** The blueprint declares a completed risk assessment. It
-does not review the assessment itself.
+**What PASS proves:** The blueprint declares a risk-assessment checkpoint. It
+does not prove that the assessment has been performed or review its content.
 
 ### TK-003 — Data-sharing agreement
 
-**What it checks:** Whether personal data is transferred under a declared
-data-sharing agreement.
+**What it checks:** Whether personal data is transferred under a defined
+data-sharing agreement checkpoint.
 
 **Logic:**
 
 ```text
 personal data + data transfer
-        -> agreement required
-        -> data_sharing_agreement_exists must be true
+        -> agreement checkpoint required
+        -> data_sharing_agreement_checkpoint_defined must be true
 ```
 
-| Scenario | Result |
-| --- | --- |
-| Personal data is transferred and a gate says an agreement exists. | **PASS** |
-| Personal data is transferred and a gate says no agreement exists. | **FAIL** |
-| There is no personal-data transfer. | **PASS** because this rule is not triggered. |
+| Status | When TK-003 returns it | Simple interpretation |
+| --- | --- | --- |
+| **PASS** | Personal data is transferred and a gate says `data_sharing_agreement_checkpoint_defined: true`; **or** no personal-data transfer is detected. | The design includes an agreement checkpoint, or this rule is not triggered. |
+| **FAIL** | Personal data is transferred and a compliance gate explicitly says `data_sharing_agreement_checkpoint_defined: false`. | Personal data is planned for transfer but the agreement checkpoint is not defined. |
+| **HUMAN** | Not produced by the current TK-003 Rego rule. | Human review is not separately represented for this rule. |
 
-**What PASS proves:** The blueprint declares that an agreement exists. It does
-not verify signatures, content, roles or legal validity.
+**What PASS proves:** The blueprint declares an agreement checkpoint. It does
+not prove that an agreement exists, is signed, or is legally valid.
 
 ### TK-004 — Data lineage
 
-**What it checks:** Whether an integration step declares that data lineage is
-available.
+**What it checks:** Whether an integration step identifies a lineage record.
 
 **Logic:**
 
 ```text
 data integration node exists
-        -> lineage_available must be true
+        -> lineage_record_defined must be true
 ```
 
-| Scenario | Result |
-| --- | --- |
-| An integration node says `lineage_available: true`. | **PASS** |
-| An integration node says `lineage_available: false`. | **FAIL** |
-| No integration node is declared. | **PASS** because this rule is not triggered. |
+| Status | When TK-004 returns it | Simple interpretation |
+| --- | --- | --- |
+| **PASS** | An integration node says `lineage_record_defined: true`; **or** no integration node exists. | The design identifies a lineage record, or this rule is not triggered. |
+| **FAIL** | An integration node explicitly says `lineage_record_defined: false`. | The integration design does not identify a lineage record. |
+| **HUMAN** | Not produced by the current TK-004 Rego rule. | Human review is not separately represented for this rule. |
 
-**What PASS proves:** The blueprint declares lineage availability. It does not
+**What PASS proves:** The blueprint identifies a planned lineage record. It does not
 inspect whether the catalog or lineage records are complete or accurate. The
 catalog reference makes the evidence traceable, but the current PoC rule still
-checks the declared `lineage_available` property only.
+checks the declared `lineage_record_defined` property only.
 
 ### TK-005 — Purpose compatibility
 
-**What it checks:** Whether the declared purpose decision is clear enough to
-accept automatically.
+**What it checks:** Whether the design declares that purpose compatibility has
+been reviewed.
 
 **Logic:**
 
 ```text
-purpose_compatible is missing, null or not true
+purpose_compatibility_declared is missing, null or not true
         -> HUMAN review
 
-purpose_compatible is true
+purpose_compatibility_declared is true
         -> PASS
 ```
 
-| Scenario | Result |
-| --- | --- |
-| A compliance gate explicitly says `purpose_compatible: true`. | **PASS** |
-| The value is missing, null or false. | **HUMAN** |
-| No compliance gates exist. | **PASS** because no purpose gate is declared. |
+| Status | When TK-005 returns it | Simple interpretation |
+| --- | --- | --- |
+| **PASS** | At least one compliance gate says `purpose_compatibility_declared: true` and no gate requires escalation; **or** no compliance gates exist. | The design declares purpose compatibility, or no purpose gate is present. |
+| **FAIL** | Not produced by the current TK-005 Rego rule. | This rule escalates uncertainty to HUMAN rather than reporting FAIL. |
+| **HUMAN** | Any compliance gate has `purpose_compatibility_declared` missing, null, false or not exactly true. | A person must review the original purpose, new purpose, legal basis and context. |
 
 **Why HUMAN exists:** Purpose compatibility depends on context, legal basis,
 original purpose, new purpose and organisational judgement. A Boolean field alone
@@ -324,26 +351,27 @@ cannot replace that review.
 
 **What it checks:** Five fixed controls in the sharing workflow:
 
-1. `dpia_check.dpia_completed`
-2. `dpia_check.risk_assessment_completed`
-3. `sharing_assessment.data_sharing_agreement_exists`
-4. `sharing_assessment.recipient_approved`
-5. `share_dataset.encrypted_in_transit`
+1. `dpia_check.dpia_checkpoint_defined`
+2. `dpia_check.risk_assessment_checkpoint_defined`
+3. `sharing_assessment.data_sharing_agreement_checkpoint_defined`
+4. `sharing_assessment.recipient_approval_checkpoint_defined`
+5. `share_dataset.encryption_in_transit_configured`
 
 **Logic:**
 
 ```text
-all five values are exactly true -> PASS
-any value is false or missing    -> FAIL
+all five design controls are exactly true -> PASS
+any control is false or missing           -> FAIL
 ```
 
-| Scenario | Result |
-| --- | --- |
-| All five controls are `true`. | **PASS** |
-| One or more controls are `false` or missing. | **FAIL** |
+| Status | When TK-006 returns it | Simple interpretation |
+| --- | --- | --- |
+| **PASS** | All five design controls are exactly `true`. | The blueprint defines every required sharing checkpoint or control. |
+| **FAIL** | Any one of the five controls is false, null or missing. | At least one sharing checkpoint or control is not defined. |
+| **HUMAN** | Not produced by the current TK-006 Rego rule. | This rule is a fixed Boolean checklist and does not escalate to human review. |
 
-**What PASS proves:** The blueprint declares all five safeguards. It does not
-test whether the safeguards operate in reality.
+**What PASS proves:** The blueprint defines all five planned safeguards. It does
+not prove that the safeguards are implemented or operate in reality.
 
 ## 6. Example evaluation
 
@@ -354,9 +382,9 @@ When the example v2 blueprint is evaluated, the current results are:
 | TK-001 | **PASS** | Sensitive data is present and DPIA completion is declared. |
 | TK-002 | **PASS** | Risk-assessment completion is declared. |
 | TK-003 | **PASS** | Personal-data transfer and a sharing agreement are declared. |
-| TK-004 | **PASS** | The integration node declares available lineage. |
-| TK-005 | **HUMAN** | One compliance gate has no purpose-compatibility value, so review is required. |
-| TK-006 | **PASS** | All five required sharing safeguards are declared as true. |
+| TK-004 | **PASS** | The integration design identifies a lineage record. |
+| TK-005 | **HUMAN** | One compliance gate has no purpose-compatibility declaration, so review is required. |
+| TK-006 | **PASS** | All five required sharing checkpoints or controls are defined. |
 
 ## 7. Running InspectR
 
@@ -414,7 +442,7 @@ relative to the current working directory.
 InspectR provides **design-time evidence**, not a complete compliance
 certificate. A PASS does not prove that:
 
-- a DPIA or risk assessment is complete or adequate;
+- a DPIA or risk assessment has been performed or is adequate;
 - a data-sharing agreement is legally valid;
 - a purpose is genuinely compatible;
 - anonymisation prevents re-identification;

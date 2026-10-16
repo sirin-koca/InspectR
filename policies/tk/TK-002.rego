@@ -3,14 +3,14 @@
 # GDPR Articles 9 and 35
 #
 # Checks whether special category personal data is involved
-# and verifies that a risk assessment has been completed.
+# and requires a risk-assessment checkpoint in the design.
 #
 # Design-time rationale:
 # Sensitive data processing introduces additional obligations
 # and requires documented risk evaluation prior to implementation.
 #
 # Outcome:
-# FAIL when special-category data is present and no risk assessment exists.
+# FAIL when special-category data is present and no risk-assessment checkpoint is defined.
 #
 package inspectr.tk.tk002
 
@@ -25,12 +25,18 @@ special_category_sources := [src | some src in nodes; src.type == "data_source";
 # 3. Helper Rule: Find any compliance gates in the pipeline
 compliance_gates := [gate | some gate in nodes; gate.type == "compliance_gate"]
 
+risk_checkpoint_value(gate) := object.get(
+	object.get(gate, "properties", {}),
+	"risk_assessment_checkpoint_defined",
+	object.get(object.get(gate, "properties", {}), "risk_assessment_completed", null)
+)
+
 # 4. SINGLE COMPLETE RULE DEFINITION: Dynamic evaluation path routing
 article := final_report if {
-	# Path A: FAIL if special category data exists but ANY compliance gate missing a risk assessment
+	# Path A: FAIL if special-category data exists but a gate lacks a risk-assessment checkpoint
 	count(special_category_sources) > 0
 	some gate in compliance_gates
-	gate.properties.risk_assessment_completed == false
+	risk_checkpoint_value(gate) == false
 
 	# Track down the specific offending source node for the UI evidence log
 	some offending_source in special_category_sources
@@ -39,7 +45,7 @@ article := final_report if {
 		"rule": "TK-002",
 		"status": "FAIL",
 		"legal_reference": "GDPR Articles 9 and 35",
-		"reason": sprintf("Special category data from source '%s' is being processed without a completed risk assessment.", [offending_source.id]),
+		"reason": sprintf("The design includes special-category data from source '%s' without a risk-assessment checkpoint.", [offending_source.id]),
 		"evidence": {
 			"input_evidence": [
 				{
@@ -49,26 +55,26 @@ article := final_report if {
 					"condition": "Source node introduces sensitive special category data into the workflow lifecycle."
 				},
 				{
-					"selector": sprintf("pipeline.nodes[%s].properties.risk_assessment_completed", [gate.id]),
-					"observed": false,
+					"selector": sprintf("pipeline.nodes[%s].properties.risk_assessment_checkpoint_defined", [gate.id]),
+					"observed": risk_checkpoint_value(gate),
 					"expected": true,
-					"condition": "A verified risk assessment must accompany sensitive data processing pipelines."
+					"condition": "A planned risk-assessment checkpoint must accompany sensitive-data processing."
 				}
 			],
 			"derived_evidence": {
 				"special_category_data_present": true,
-				"risk_assessment_verified": false
+				"risk_assessment_checkpoint_defined": false
 			}
 		},
-		"remedy": sprintf("Conduct a formal risk assessment for the '%s' workflow, then set 'risk_assessment_completed: true' on your compliance gate.", [offending_source.id])
+		"remedy": sprintf("Add a risk-assessment checkpoint for the '%s' workflow and set 'risk_assessment_checkpoint_defined: true' on the compliance gate.", [offending_source.id])
 	}
 }
 
 else := final_report if {
-	# Path B: PASS if special category data exists and all compliance gates have verified risk assessments
+	# Path B: PASS if special-category data exists and a gate defines a risk-assessment checkpoint
 	count(special_category_sources) > 0
 	some gate in compliance_gates
-	gate.properties.risk_assessment_completed == true
+	risk_checkpoint_value(gate) == true
 
 	some main_source in special_category_sources
 
@@ -76,19 +82,19 @@ else := final_report if {
 		"rule": "TK-002",
 		"status": "PASS",
 		"legal_reference": "GDPR Articles 9 and 35",
-		"reason": "Evidence of specialized risk assessment is present and validated against processing sources.",
+		"reason": "The blueprint includes a risk-assessment checkpoint for the declared sensitive-data processing.",
 		"evidence": {
 			"input_evidence": [
 				{
-					"selector": sprintf("pipeline.nodes[%s].properties.risk_assessment_completed", [gate.id]),
-					"observed": true,
+					"selector": sprintf("pipeline.nodes[%s].properties.risk_assessment_checkpoint_defined", [gate.id]),
+					"observed": risk_checkpoint_value(gate),
 					"expected": true,
-					"condition": "Compliance gate explicitly tracks and satisfies sensitive data risk protocols."
+					"condition": "The planned pipeline includes a risk-assessment checkpoint for sensitive data."
 				}
 			],
 			"derived_evidence": {
 				"special_category_data_present": true,
-				"risk_assessment_verified": true,
+				"risk_assessment_checkpoint_defined": true,
 				"validated_source_id": main_source.id
 			}
 		},
@@ -109,7 +115,7 @@ else := final_report if {
 			"input_evidence": [],
 			"derived_evidence": {
 				"special_category_data_present": false,
-				"risk_assessment_verified": false
+				"risk_assessment_checkpoint_defined": false
 			}
 		},
 		"remedy": null

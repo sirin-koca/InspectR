@@ -86,7 +86,7 @@ digraph Pipeline {
 
 st.caption(
     "Illustrative graph inspired by the TK/MUNDAT context; "
-    "not a verified representation of its deployed infrastructure."
+    "not an authoritative representation of deployed infrastructure."
 )
 
 left, right = st.columns(2, gap="large")
@@ -356,7 +356,7 @@ with st.container(border=True):
 st.caption(
     "Educational simulation only. This section does not call OPA "
     "or execute InspectR's actual Rego policies. "
-    "Anonymisation is a declared property here, not a verified outcome."
+    "Anonymisation is a design declaration here, not runtime evidence."
 )
 
 # -------------------------------------------------------
@@ -395,8 +395,8 @@ st.dataframe(
 
 st.caption(
     "Mappings above are drawn from GRC ENGINEERING. "
-    "They are proposed technical checks, not verified "
-    "legal conclusions or proof of actual MUNDAT configurations."
+    "They are proposed design-time checks, not legal conclusions "
+    "or proof of actual MUNDAT configurations."
 )
 
 st.divider()

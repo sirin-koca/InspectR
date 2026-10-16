@@ -27,32 +27,38 @@ nodes := object.get(object.get(input, "pipeline", {}), "nodes", [])
 # 2. Helper Rule: Find compliance gates in the pipeline
 compliance_gates := [gate | some gate in nodes; gate.type == "compliance_gate"]
 
+purpose_compatibility_value(gate) := object.get(
+	object.get(gate, "properties", {}),
+	"purpose_compatibility_declared",
+	object.get(object.get(gate, "properties", {}), "purpose_compatible", null)
+)
+
 # 3. SINGLE COMPLETE RULE DEFINITION: Dynamic evaluation path routing
 article := final_report if {
 	# Path A: Trigger a HUMAN escalation status if any compliance gate has an unconfirmed, null, or missing purpose
 	some gate in compliance_gates
-	not object.get(gate.properties, "purpose_compatible", false) == true
+	not purpose_compatibility_value(gate) == true
 
 	final_report := {
 		"rule": "TK-005",
 		"status": "HUMAN",
 		"legal_reference": "GDPR Articles 5(1)(b) and 6(4)",
-		"reason": sprintf("Automated verification cannot conclusively determine purpose compatibility for gate '%s'. Contextual human review is mandated.", [gate.id]),
+		"reason": sprintf("The design does not declare purpose compatibility for gate '%s'. Contextual human review is required.", [gate.id]),
 		"evidence": {
 			"input_evidence": [
 				{
-					"selector": sprintf("pipeline.nodes[%s].properties.purpose_compatible", [gate.id]),
-					"observed": object.get(gate.properties, "purpose_compatible", null),
+					"selector": sprintf("pipeline.nodes[%s].properties.purpose_compatibility_declared", [gate.id]),
+					"observed": purpose_compatibility_value(gate),
 					"expected": true,
-					"condition": "Purpose compatibility requires an explicitly authorized context evaluation that cannot be automated."
+					"condition": "The design must declare that purpose compatibility has been reviewed before sharing."
 				}
 			],
 			"derived_evidence": {
-				"automated_assessment": "inconclusive",
+				"design_time_assessment": "inconclusive",
 				"escalated_gate_id": gate.id
 			}
 		},
-		"remedy": "Perform human legal and organizational review of the dataset request context, then declare 'purpose_compatible: true' upon sign-off."
+		"remedy": "Perform human legal and organisational review, then set 'purpose_compatibility_declared: true' after the design review."
 	}
 }
 
@@ -60,24 +66,24 @@ else := final_report if {
 	# Path B: PASS if compliance gates exist and explicitly verify purpose compatibility
 	count(compliance_gates) > 0
 	some gate in compliance_gates
-	gate.properties.purpose_compatible == true
+	purpose_compatibility_value(gate) == true
 
 	final_report := {
 		"rule": "TK-005",
 		"status": "PASS",
 		"legal_reference": "GDPR Articles 5(1)(b) and 6(4)",
-		"reason": "Purpose compatibility evidence has been explicitly validated within the pipeline metadata blueprints.",
+		"reason": "The design declares purpose compatibility within the pipeline metadata.",
 		"evidence": {
 			"input_evidence": [
 				{
-					"selector": sprintf("pipeline.nodes[%s].properties.purpose_compatible", [gate.id]),
-					"observed": true,
+					"selector": sprintf("pipeline.nodes[%s].properties.purpose_compatibility_declared", [gate.id]),
+					"observed": purpose_compatibility_value(gate),
 					"expected": true,
-					"condition": "Purpose alignment is verified and logged."
+					"condition": "Purpose compatibility is declared for the planned sharing design."
 				}
 			],
 			"derived_evidence": {
-				"purpose_compatible": true,
+				"purpose_compatibility_declared": true,
 				"validated_gate_id": gate.id
 			}
 		},
@@ -97,7 +103,7 @@ else := final_report if {
 		"evidence": {
 			"input_evidence": [],
 			"derived_evidence": {
-				"purpose_compatible": true
+				"purpose_compatibility_declared": true
 			}
 		},
 		"remedy": null

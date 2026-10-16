@@ -15,8 +15,8 @@ st.info(
     """
     - **To what extent can abstract legal requirements be translated into explicit, evidence-bound, 
     machine-assessable technical controls at design time of data pipelines?**
-    - **Which regulatory compliance requirements can be verified from static data pipeline representations
-      at design time, and what are the limits of such verification?**
+    - **Which regulatory compliance requirements can be inspected from static data pipeline representations
+      at design time, and what are the limits of that inspection?**
     """
 )
 

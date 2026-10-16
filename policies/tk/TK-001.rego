@@ -16,51 +16,57 @@ dpia_is_legally_required if {
 # 3. Helper Rule: Find any compliance gates in the pipeline
 compliance_gates := [gate | some gate in nodes; gate.type == "compliance_gate"]
 
+dpia_checkpoint_value(gate) := object.get(
+	object.get(gate, "properties", {}),
+	"dpia_checkpoint_defined",
+	object.get(object.get(gate, "properties", {}), "dpia_completed", null)
+)
+
 # 4. SINGLE COMPLETE RULE DEFINITION: Routes exactly one final status report map to your UI
 article := final_report if {
-	# Path A: Trigger a validation failure if a DPIA is required but any gate is unverified
+	# Path A: Fail if a DPIA is required but a checkpoint is not defined
 	dpia_is_legally_required
 	some gate in compliance_gates
-	gate.properties.dpia_completed == false
+	dpia_checkpoint_value(gate) == false
 
 	final_report := {
 		"rule": "TK-001",
 		"status": "FAIL",
 		"legal_reference": "GDPR Article 35",
-		"reason": "A DPIA is legally required due to sensitive data processing but has not been verified as completed.",
+		"reason": "A DPIA checkpoint is required by the design, but the blueprint declares that it is not defined.",
 		"evidence": {
 			"input_evidence": [{
-				"selector": sprintf("pipeline.nodes[%s].properties.dpia_completed", [gate.id]),
-				"observed": gate.properties.dpia_completed,
+				"selector": sprintf("pipeline.nodes[%s].properties.dpia_checkpoint_defined", [gate.id]),
+				"observed": dpia_checkpoint_value(gate),
 				"expected": true,
-				"condition": "Processing special category data requires a verified DPIA gate."
+				"condition": "Processing special-category data requires a DPIA checkpoint in the planned pipeline."
 			}],
 			"derived_evidence": {
 				"dpia_required_by_law": true,
-				"dpia_gate_completed": false
+				"dpia_checkpoint_defined": false
 			}
 		},
-		"remedy": "Conduct a DPIA and update your compliance_gate node properties to 'dpia_completed: true'."
+		"remedy": "Add a DPIA checkpoint to the planned pipeline and set 'dpia_checkpoint_defined: true' on the compliance gate."
 	}
 }
 
 else := final_report if {
-	# Path B: Pass inspection if a DPIA is required and a verified gate is confirmed true
+	# Path B: Pass if a DPIA is required and a checkpoint is defined
 	dpia_is_legally_required
 	some gate in compliance_gates
-	gate.properties.dpia_completed == true
+	dpia_checkpoint_value(gate) == true
 
 	final_report := {
 		"rule": "TK-001",
 		"status": "PASS",
 		"legal_reference": "GDPR Article 35",
-		"reason": "DPIA compliance obligations are satisfied. A verified compliance gate was found in the data pipeline blueprint.",
+		"reason": "The blueprint includes a DPIA checkpoint for the sensitive-data processing design.",
 		"evidence": {
 			"input_evidence": [{
-				"selector": sprintf("pipeline.nodes[%s].properties.dpia_completed", [gate.id]),
-				"observed": gate.properties.dpia_completed,
+				"selector": sprintf("pipeline.nodes[%s].properties.dpia_checkpoint_defined", [gate.id]),
+				"observed": dpia_checkpoint_value(gate),
 				"expected": true,
-				"condition": "Compliance gate explicitly tracks and satisfies DPIA execution metrics."
+				"condition": "The planned pipeline includes a DPIA checkpoint before sensitive processing."
 			}],
 			"derived_evidence": {
 				"dpia_legally_required": true,

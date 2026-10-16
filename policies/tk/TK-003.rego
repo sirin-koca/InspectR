@@ -3,7 +3,7 @@
 # Personal data sharing requires data sharing agreement
 # GDPR Articles 5(1)(a), 6, and 28
 #
-# Checks whether a formal data-sharing agreement exists
+# Checks whether the design defines a data-sharing agreement checkpoint
 # before personal data is shared with another party.
 #
 # Design-time rationale:
@@ -36,61 +36,67 @@ pipeline_performs_transfer if {
 # 4. Helper Rule: Find compliance gates in the blueprint
 compliance_gates := [gate | some gate in nodes; gate.type == "compliance_gate"]
 
+agreement_checkpoint_value(gate) := object.get(
+	object.get(gate, "properties", {}),
+	"data_sharing_agreement_checkpoint_defined",
+	object.get(object.get(gate, "properties", {}), "data_sharing_agreement_exists", null)
+)
+
 # 5. SINGLE COMPLETE RULE DEFINITION: Dynamic evaluation path routing
 article := final_report if {
 	# Path A: FAIL if personal data is being transferred, but ANY compliance gate missing a DSA
 	pipeline_handles_personal_data
 	pipeline_performs_transfer
 	some gate in compliance_gates
-	gate.properties.data_sharing_agreement_exists == false
+	agreement_checkpoint_value(gate) == false
 
 	final_report := {
 		"rule": "TK-003",
 		"status": "FAIL",
 		"legal_reference": "GDPR Articles 5, 6, and 28",
-		"reason": "Personal data sharing is planned, but a valid Data Sharing Agreement (DSA) has not been verified.",
+		"reason": "Personal-data transfer is planned, but the blueprint does not define a data-sharing agreement checkpoint.",
 		"evidence": {
 			"input_evidence": [
 				{
-					"selector": sprintf("pipeline.nodes[%s].properties.data_sharing_agreement_exists", [gate.id]),
-					"observed": false,
+					"selector": sprintf("pipeline.nodes[%s].properties.data_sharing_agreement_checkpoint_defined", [gate.id]),
+					"observed": agreement_checkpoint_value(gate),
 					"expected": true,
-					"condition": "Cross-boundary municipal data transfer mandates a signed and documented data sharing agreement."
+					"condition": "A planned cross-boundary transfer requires a data-sharing agreement checkpoint."
 				}
 			],
 			"derived_evidence": {
 				"sharing_requires_agreement": true,
-				"agreement_exists": false
+				"agreement_checkpoint_defined": false
 			}
 		},
-		"remedy": "Draft, execute, and document a formal Data Sharing Agreement with the recipient, then update your compliance gate properties to 'data_sharing_agreement_exists: true'."
+		"remedy": "Define a data-sharing agreement checkpoint with the recipient and set 'data_sharing_agreement_checkpoint_defined: true' on the compliance gate."
 	}
 }
 
 else := final_report if {
-	# Path B: PASS if personal data transfer is planned, and a compliance gate verifies the DSA exists
+	# Path B: PASS if personal-data transfer is planned and a gate defines a DSA checkpoint
 	pipeline_handles_personal_data
 	pipeline_performs_transfer
 	some gate in compliance_gates
-	gate.properties.data_sharing_agreement_exists == true
+	agreement_checkpoint_value(gate) == true
 
 	final_report := {
 		"rule": "TK-003",
 		"status": "PASS",
 		"legal_reference": "GDPR Articles 5, 6, and 28",
-		"reason": "Data sharing agreement is verified and present within the compliance gateway configuration.",
+		"reason": "The blueprint includes a data-sharing agreement checkpoint for the planned transfer.",
 		"evidence": {
 			"input_evidence": [
 				{
-					"selector": sprintf("pipeline.nodes[%s].properties.data_sharing_agreement_exists", [gate.id]),
-					"observed": true,
+					"selector": sprintf("pipeline.nodes[%s].properties.data_sharing_agreement_checkpoint_defined", [gate.id]),
+					"observed": agreement_checkpoint_value(gate),
 					"expected": true,
-					"condition": "Data sharing agreement explicitly tracks and satisfies legal transfer protocols."
+					"condition": "The planned transfer includes a data-sharing agreement checkpoint."
 				}
 			],
 			"derived_evidence": {
 				"sharing_requires_agreement": true,
-				"agreement_exists": true,
+				"agreement_checkpoint_defined": true,
 				"validated_gate_id": gate.id
 			}
 		},
@@ -111,7 +117,7 @@ else := final_report if {
 			"input_evidence": [],
 			"derived_evidence": {
 				"sharing_requires_agreement": false,
-				"agreement_exists": false
+				"agreement_checkpoint_defined": false
 			}
 		},
 		"remedy": null

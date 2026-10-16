@@ -7,16 +7,16 @@
   "children": [
     {
       "id": "TK-001",
-      "label": "TK-001 — DPIA requirement and completion",
+      "label": "TK-001 — DPIA checkpoint",
       "level": "Rule",
-      "description": "Checks whether elevated-risk personal data processing requires and documents a completed DPIA.",
+      "description": "Checks whether elevated-risk personal data processing includes a defined DPIA checkpoint.",
       "rule_id": "TK-001",
       "legal_references": ["GDPR Art. 35"],
       "relationship": "TK/MUNDAT operational proxy",
       "evidence_fields": [
         "pipeline.nodes[*].properties.contains_personal_data",
         "pipeline.nodes[*].properties.contains_special_category_data",
-        "pipeline.nodes[*].properties.dpia_completed"
+        "pipeline.nodes[*].properties.dpia_checkpoint_defined"
       ],
       "color": "#FF77DC"
     },
@@ -24,13 +24,13 @@
       "id": "TK-002",
       "label": "TK-002 — Special-category risk assessment",
       "level": "Rule",
-      "description": "Checks whether special-category data processing has a completed risk assessment.",
+      "description": "Checks whether special-category data processing includes a defined risk-assessment checkpoint.",
       "rule_id": "TK-002",
       "legal_references": ["GDPR Arts. 9 and 35"],
       "relationship": "TK/MUNDAT operational proxy",
       "evidence_fields": [
         "pipeline.nodes[*].properties.contains_special_category_data",
-        "pipeline.nodes[*].properties.risk_assessment_completed"
+        "pipeline.nodes[*].properties.risk_assessment_checkpoint_defined"
       ],
       "color": "#FDB033"
     },
@@ -38,14 +38,14 @@
       "id": "TK-003",
       "label": "TK-003 — Data-sharing agreement",
       "level": "Rule",
-      "description": "Checks whether personal-data transfer is supported by a declared data-sharing agreement.",
+      "description": "Checks whether personal-data transfer includes a defined data-sharing agreement checkpoint.",
       "rule_id": "TK-003",
       "legal_references": ["GDPR Arts. 5, 6, and 28"],
       "relationship": "TK/MUNDAT governance operationalisation",
       "evidence_fields": [
         "pipeline.nodes[*].properties.contains_personal_data",
         "pipeline.nodes[*].type",
-        "pipeline.nodes[*].properties.data_sharing_agreement_exists"
+        "pipeline.nodes[*].properties.data_sharing_agreement_checkpoint_defined"
       ],
       "color": "#2E86AB"
     },
@@ -53,13 +53,13 @@
       "id": "TK-004",
       "label": "TK-004 — Data lineage and provenance",
       "level": "Rule",
-      "description": "Checks whether integrated datasets declare available lineage.",
+      "description": "Checks whether integrated datasets identify a planned lineage record.",
       "rule_id": "TK-004",
       "legal_references": ["GDPR Arts. 5(2) and 30"],
       "relationship": "TK/MUNDAT traceability operationalisation",
       "evidence_fields": [
         "pipeline.nodes[*].type",
-        "pipeline.nodes[*].properties.lineage_available"
+        "pipeline.nodes[*].properties.lineage_record_defined"
       ],
       "color": "#62C370"
     },
@@ -67,12 +67,12 @@
       "id": "TK-005",
       "label": "TK-005 — Purpose compatibility review",
       "level": "Rule",
-      "description": "Checks whether purpose compatibility is explicitly verified or requires human review.",
+      "description": "Checks whether purpose compatibility is declared in the design or requires human review.",
       "rule_id": "TK-005",
       "legal_references": ["GDPR Arts. 5(1)(b) and 6(4)"],
       "relationship": "TK/MUNDAT governance safeguard",
       "evidence_fields": [
-        "pipeline.nodes[*].properties.purpose_compatible"
+        "pipeline.nodes[*].properties.purpose_compatibility_declared"
       ],
       "color": "#A66DD4"
     },
@@ -85,11 +85,11 @@
       "legal_references": ["GDPR Arts. 25 and 32"],
       "relationship": "TK/MUNDAT sharing safeguard",
       "evidence_fields": [
-        "dpia_check.properties.dpia_completed",
-        "dpia_check.properties.risk_assessment_completed",
-        "sharing_assessment.properties.data_sharing_agreement_exists",
-        "sharing_assessment.properties.recipient_approved",
-        "share_dataset.properties.encrypted_in_transit"
+        "dpia_check.properties.dpia_checkpoint_defined",
+        "dpia_check.properties.risk_assessment_checkpoint_defined",
+        "sharing_assessment.properties.data_sharing_agreement_checkpoint_defined",
+        "sharing_assessment.properties.recipient_approval_checkpoint_defined",
+        "share_dataset.properties.encryption_in_transit_configured"
       ],
       "color": "#E76F51"
     }

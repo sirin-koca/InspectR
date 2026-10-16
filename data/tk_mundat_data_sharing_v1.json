@@ -32,8 +32,8 @@
       "type": "compliance_gate",
       "properties": {
         "dpia_required": true,
-        "dpia_completed": true,
-        "risk_assessment_completed": true,
+        "dpia_checkpoint_defined": true,
+        "risk_assessment_checkpoint_defined": true,
         "evidence_required": true
       }
     },
@@ -81,7 +81,7 @@
       "id": "integrate_dataset",
       "type": "data_integration",
       "properties": {
-        "lineage_available": true,
+        "lineage_record_defined": true,
         "provenance_recorded": true,
         "schema_documented": true
       }
@@ -91,7 +91,7 @@
       "id": "anonymisation",
       "type": "privacy_control",
       "properties": {
-        "anonymisation_applied": true,
+        "anonymisation_control_defined": true,
         "reidentification_risk_assessed": true
       }
     },
@@ -100,10 +100,10 @@
       "id": "sharing_assessment",
       "type": "compliance_gate",
       "properties": {
-        "purpose_compatible": true,
-        "contract_available": true,
-        "recipient_approved": true,
-        "data_sharing_agreement_exists": true
+        "purpose_compatibility_declared": true,
+        "contract_checkpoint_defined": true,
+        "recipient_approval_checkpoint_defined": true,
+        "data_sharing_agreement_checkpoint_defined": true
       }
     },
 
@@ -111,7 +111,7 @@
       "id": "share_dataset",
       "type": "data_transfer",
       "properties": {
-        "encrypted_in_transit": true,
+        "encryption_in_transit_configured": true,
         "approved_recipient": true,
         "audit_trail_enabled": true
       }
