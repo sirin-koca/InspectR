@@ -63,7 +63,7 @@ Known limitations
 InspectR is an independent, standalone, generic policy engine. 
 This repository showcases only a specific use case (TK use case). 
 The PoC is designed to demonstrate the feasibility of the approach without the complexity of a full implementation.
-During this PoC implementation of InspectR WE WILL NOT USE IR (the graph model, the Intermediate Representation) for KISS purposes.
+PoC implementation excludes IR (the graph model, the Intermediate Representation) for simplicity.
 
 ### InspectR PoC definition:
 InspectR is a proof-of-concept architecture for design-time AI and data-pipeline compliance tooling. It investigates how the semantic gap between complex regulatory requirements and deterministic software logic can be addressed through Policy-as-Code, using a static TK/MUNDAT pipeline blueprint as the concrete evaluation case. The PoC deliberately omits an Intermediate Representation and evaluates the blueprint directly with OPA/Rego.
