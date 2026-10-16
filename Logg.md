@@ -7,7 +7,7 @@
 
 <img width="672" height="690" alt="image" src="https://github.com/user-attachments/assets/68648737-30e3-4ad7-aead-14c57d2bbd32" />
 
-# What is MUNDAT case is about? 
+# MUNDAT case 
 Trondheim municipality has a large number of data requests, many systems, many stakeholders, inconsistent processes, limited compliance expertise, limited metadata, and difficulty assessing compliance risks consistently and efficiently.
 
 It is primarily a governance + architecture + process orchestration problem.
