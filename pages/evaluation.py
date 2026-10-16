@@ -68,7 +68,7 @@ def render_evidence(evidence: dict) -> None:
 
     derived_evidence = evidence.get("derived_evidence")
     if derived_evidence:
-        st.caption("Derived evidence calculated by Rego")
+        st.caption("Derived design-time evidence calculated by Rego")
         st.json(derived_evidence)
 
 
@@ -126,14 +126,14 @@ def uploaded_file_signature(uploaded_file) -> str:
 
 st.subheader("Evaluation")
 st.caption(
-    "Upload one static JSON pipeline blueprint and evaluate it with the "
-    "InspectR Policy-as-Code rules."
+    "Upload one static JSON pipeline blueprint and inspect its planned "
+    "compliance checkpoints with the InspectR Policy-as-Code rules."
 )
 
 with st.container(border=True):
     st.markdown("#### Inspect a pipeline blueprint")
     st.caption(
-        "Upload a JSON blueprint, then run the six TK/MUNDAT design-time rules."
+        "Upload a JSON blueprint containing data, workflow and infrastructure metadata, then run the six TK/MUNDAT design-time rules."
     )
     uploaded_file = st.file_uploader(
         "JSON blueprint",
@@ -178,7 +178,7 @@ with st.container(border=True):
                     )
                 st.session_state["evaluation_name"] = uploaded_file.name
                 st.session_state["evaluation_signature"] = file_signature
-                st.success("Blueprint evaluation complete.")
+                st.success("Design-time blueprint inspection complete.")
             except (RuntimeError, ValueError) as error:
                 st.session_state.pop("evaluation_results", None)
                 st.error(f"Blueprint evaluation failed: {error}")
@@ -197,7 +197,7 @@ if uploaded_file is not None and uploaded_blueprint is not None:
 
     with blueprint_column:
         st.markdown("#### Blueprint JSON")
-        st.caption("The exact parsed input submitted to OPA.")
+        st.caption("The exact planned design submitted to OPA.")
         with st.container(border=True):
             st.code(
                 json.dumps(uploaded_blueprint, indent=2, ensure_ascii=False),

@@ -7,7 +7,8 @@ st.popover(
 "This app is a PoC (proof-of-concept) version of InspectR - a compliance automation engine. " \
 "It deliberately implements only a small, concrete subset of the " \
 " regulation relevant to the TK use case (TK UC). "
-"**The IR component is excluded for simplicity.**"
+"**The current PoC evaluates the unified JSON blueprint directly; it does not "
+"build a separate intermediate representation.**"
 )
 
 # --------------------------------------------------
@@ -67,13 +68,13 @@ with col3:
     st.markdown("##### 3️⃣ The Artifact: InspectR")
     st.markdown(
     """
-    **Blueprints (inLUMEN / Airflow / Terraform) → Parser → Unified Graph (IR) → OPA/Rego Engine**
+    **Data Schema + Pipeline Manifest + Infrastructure/IaC → Unified JSON Blueprint → OPA/Rego Engine**
     """
     )
     st.info(
     """ 
     - Blueprint + policy -> decision\n\n
-    - OK/FAIL/HUMAN output with evidence, reason, and remedy.
+    - PASS/FAIL/HUMAN output with evidence, reason, and remedy.
     - OPA engine independently evaluates the static blueprint against Rego conditions.
     """
     )    
@@ -99,6 +100,6 @@ with col5:
     - **Coverage** — % of legal rules that are statically checkable
     - **Evidence sufficiency** — availability and completeness of required blueprint evidence
     - **Explainability** — traceability from requirement to rule, evidence, result, and remedy
-    - **Tri-state behaviour** — `OK / FAIL / HUMAN` classifications and documented limits"""
+    - **Tri-state behaviour** — `PASS / FAIL / HUMAN` classifications and documented limits"""
     )
 st.divider()

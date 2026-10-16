@@ -1,7 +1,8 @@
 import streamlit as st
 
 st.warning(
-    "No Intermediate Representation (IR) is implemented in this PoC for KISS purposes."
+    "The current PoC evaluates the unified JSON blueprint directly; no separate "
+    "intermediate representation is built."
 )
 
 st.image(
@@ -18,16 +19,15 @@ with col1:
     """
     ### Why this architecture?
 
-    1. **Blueprint** - the pipeline topology: the TK/MUNDAT pipeline and declared evidence.
+    1. **Blueprint** - a unified JSON design assembled from data schema, pipeline manifest, and infrastructure/IaC metadata.
     2. **Policy** - the operational interpretation encoded in Rego.
     3. **Decision engine** - InspectR utilizing OPA evaluates the policy independently from the application logic.
     4. **Evaluation** - InspectR reports the decision and evidence to the user - optionally triggers the agentic work-flow for self-correction.
 
-    - **Decoupling Blueprint from Logic**: Heterogeneous data pipeline artifacts are parsed into a Unified Graph Intermediate Representation (IR). 
-    Rego policies evaluate the Graph IR, not raw code. This makes IncspectR vendor-agnostic and scalable. 
+    - **Design-time inspection**: The blueprint describes planned controls and checkpoints before deployment; it is not runtime evidence.
     - **Shift-Left Compliance**: Catching non-compliance at design-time (CI/CD / pull request phase) prevents 
     costly runtime compliance failures and data contamination. 
-    - **Tri-State Output (OK / FAIL / HUMAN)**: Standard linters offer binary true/false decisions. 
+    - **Tri-State Output (PASS / FAIL / HUMAN)**: Standard linters offer binary true/false decisions.
     Real-world compliance requires handling ambiguity by routing complex legal edge cases to human compliance 
     officers (HUMAN). 
     """
@@ -48,7 +48,7 @@ with col2:
             ↓
             Evaluation: InspectR Engine
             ↓
-            OK/FAIL/HUMAN
+            PASS/FAIL/HUMAN
             """,
             language="text",                    
 )  

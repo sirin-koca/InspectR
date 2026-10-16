@@ -3,14 +3,14 @@ import streamlit as st
 
 
 st.subheader("Policy-as-Code")
-st.caption("From TK/MUNDAT requirements to evidence-bound OPA/Rego evaluation")
+st.caption("From TK/MUNDAT requirements to evidence-bound design-time OPA/Rego inspection")
 
 st.markdown(
     """
     In this PoC, selected TK/MUNDAT requirements are operationalised as
-    six Rego rules. OPA evaluates those rules against declared evidence in a
-    static pipeline blueprint. The Python application orchestrates the
-    evaluation and presents the machine-readable findings.
+    six Rego rules. OPA evaluates those rules against declared design-time
+    evidence in a static pipeline blueprint. The Python application orchestrates
+    the inspection and presents the machine-readable findings.
     """
 )
 
@@ -97,9 +97,9 @@ for column, title, description in zip(
     result_columns,
     ("🟢 PASS", "🔴 FAIL", "🟠 HUMAN"),
     (
-        "The available evidence satisfies the encoded operational rule.",
-        "The evidence explicitly violates the encoded operational rule.",
-        "The evidence is missing, ambiguous, or insufficient for automation.",
+        "The blueprint defines the control required by the encoded design-time rule.",
+        "The blueprint explicitly lacks or disables a required design-time control.",
+        "The blueprint is missing enough information for automated inspection.",
     ),
 ):
     with column:

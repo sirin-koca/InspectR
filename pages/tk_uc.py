@@ -3,6 +3,10 @@ import streamlit as st
 
 
 st.subheader("TK Use Case — MUNDAT")
+st.caption(
+    "This page describes the bounded Sickleave scenario and its planned "
+    "design-time compliance checkpoints."
+)
 st.caption("Trondheim Kommune data-sharing use case")
 
 st.info(
@@ -73,7 +77,7 @@ rules = [
         "PASS": "No trigger, or a DPIA checkpoint is defined.",
         "FAIL": "DPIA required but its checkpoint is not defined.",
         "HUMAN": "Not currently returned for missing evidence.",
-        "Boundary": "Does not assess DPIA quality or legal adequacy.",
+        "Boundary": "Does not prove DPIA completion, quality or legal adequacy.",
     },
     {
         "Rule": "TK-002",
@@ -83,7 +87,7 @@ rules = [
         "PASS": "No special-category source, or a risk checkpoint is defined.",
         "FAIL": "The risk-assessment checkpoint is not defined.",
         "HUMAN": "Not currently returned for missing evidence.",
-        "Boundary": "Does not assess risk content or mitigation quality.",
+        "Boundary": "Does not prove that a risk assessment was performed or adequate.",
     },
     {
         "Rule": "TK-003",
@@ -93,7 +97,7 @@ rules = [
         "PASS": "Transfer not triggered, or an agreement checkpoint is defined.",
         "FAIL": "Transfer lacks a defined agreement checkpoint.",
         "HUMAN": "Not currently returned for missing evidence.",
-        "Boundary": "Does not verify an external agreement or legal validity.",
+        "Boundary": "Does not prove that an agreement will exist or be legally valid.",
     },
     {
         "Rule": "TK-004",
@@ -103,7 +107,7 @@ rules = [
         "PASS": "No integration, or a lineage record is identified.",
         "FAIL": "Integration lacks a defined lineage record.",
         "HUMAN": "Not currently returned for missing evidence.",
-        "Boundary": "Does not verify lineage quality or runtime generation.",
+        "Boundary": "Does not verify the planned lineage record's quality or runtime generation.",
     },
     {
         "Rule": "TK-005",

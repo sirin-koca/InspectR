@@ -105,10 +105,9 @@ with tab2:
 with tab3:
     st.subheader("Policy-as-Code Architecture")
     st.write(
-        "Intermediate Representation (IR) as unified graph model. " \
-        "IR is not implemented in this PoC for KISS purposes. "
-        "Policy-as-Code · OPA/Rego · "
-        "Structured Pipeline Representations"
+        "Unified JSON pipeline blueprint evaluated directly by OPA/Rego. "
+        "The blueprint combines schema, manifest and infrastructure metadata. "
+        "Policy-as-Code · OPA/Rego · Static design representations"
     )
 
     st.subheader("Research Artifact")
@@ -221,8 +220,8 @@ with tab6:
             - **Architectural separation:** Policy is separated from application logic.
             - **Independent evaluation:** OPA evaluates Rego rules against blueprint evidence.
             - **Traceability:** Each rule exposes its interpretation, evidence, result, and remedy.
-            - **Evidence sufficiency:** `OK`, `FAIL`, and `HUMAN` distinguish satisfied,
-            negative, and insufficient evidence.
+            - **Evidence sufficiency:** `PASS`, `FAIL`, and `HUMAN` distinguish a
+            defined design control, a missing design control, and insufficient evidence.
             - **Reproducibility:** The same blueprint produces repeatable rule results.
             - **Limit visibility:** Missing evidence, alternative interpretations, and
             rule limitations are documented.

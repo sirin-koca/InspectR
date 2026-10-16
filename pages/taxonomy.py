@@ -70,7 +70,7 @@ fig = px.icicle(
         legal_references,
         relationships,
     ],
-    title="TK/MUNDAT GDPR Compliance Scope",
+    title="TK/MUNDAT Design-Time Inspection Scope",
 )
 
 fig.update_traces(
@@ -106,7 +106,7 @@ st.popover(
 ).write(
     """
     Machine-readable compliance taxonomy used by the InspectR PoC for the
-    TK/MUNDAT GDPR Compliance Scope.
+    TK/MUNDAT design-time inspection scope.
 
     The taxonomy is organised by the selected legal basis: GDPR Articles 25,
     30, and 35. Each article branch contains a TK/MUNDAT operational
@@ -117,7 +117,7 @@ st.popover(
     use case but is not presented as a standalone GDPR article implementation.
 
     These are limited design-time operational proxies. They do not establish
-    legal compliance with the GDPR as a whole.
+    legal compliance with the GDPR as a whole or confirm runtime operation.
     """
 )
 # -------------------------

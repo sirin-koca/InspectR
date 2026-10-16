@@ -107,7 +107,20 @@ For example, a municipality may receive a request to combine HR data from
 several systems, remove identifying information, and share a research dataset.
 The pipeline blueprint describes this planned route before implementation.
 
-### How the TK-blueprint is built
+### How the TK blueprint is built
+
+The unified blueprint is assembled from three architectural input layers:
+
+1. **Data Schema** — fields, data types, personal-data classification and
+   protection metadata.
+2. **Pipeline Manifest** — processing stages, destinations, purposes,
+   dependencies and declared checkpoints.
+3. **Infrastructure / IaC** — storage, hosting, encryption, retention and
+   deployment properties.
+
+These inputs are represented together as one JSON blueprint for InspectR.
+The three layers are an architectural decomposition for this PoC; they are
+not a mandatory universal file format.
 
 The blueprint is a JSON document containing a `pipeline` object. The pipeline
 has two main parts:
@@ -160,6 +173,26 @@ design declarations:
 For example, `dpia_checkpoint_defined: true` means that the blueprint includes
 a DPIA checkpoint. It does not mean that a DPIA has already been performed or
 approved. Runtime implementation and document review happen later.
+
+### Design-time checkpoint statuses
+
+These statuses describe the state of the planned control, not the state of
+real-world data or runtime execution:
+
+| Status | Meaning |
+| --- | --- |
+| `required` | The control is required by the design or policy. |
+| `defined` | The blueprint includes the checkpoint or architectural control. |
+| `planned` | The control is intended to be implemented before deployment. |
+| `verified` | Evidence has been reviewed and accepted by an authorised reviewer. |
+| `not_applicable` | The control does not apply to this pipeline design. |
+| `unknown` | The blueprint does not contain enough information. |
+| `failed` | The design explicitly lacks the required control. |
+
+The current PoC uses Boolean design properties for the active Rego checks. A
+value of `true` means that the checkpoint or control is defined in the design;
+it does not mean that it has already been completed, approved or technically
+verified.
 
 ## 3. Metadata Catalogue
 

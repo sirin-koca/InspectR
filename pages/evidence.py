@@ -12,7 +12,8 @@ st.info(
     """
     **Input evidence** is read from the uploaded JSON blueprint. **Derived
     evidence** is calculated by Rego from that input. A result confirms only
-    the encoded design-time control; it is not a legal determination.
+    that the planned design satisfies the encoded checkpoint rule; it is not
+    evidence that the design has been implemented or a legal determination.
     """
 )
 
@@ -32,7 +33,7 @@ rules = [
         "rows": [
             ("Applicability", "A data_source contains personal and special-category data."),
             ("Input selectors", "pipeline.nodes[*].type; pipeline.nodes[*].properties.contains_personal_data; pipeline.nodes[*].properties.contains_special_category_data; pipeline.nodes[*].properties.dpia_checkpoint_defined"),
-            ("PASS", "No DPIA trigger exists, or the design defines a DPIA checkpoint."),
+            ("PASS", "No DPIA trigger is declared, or the design defines a DPIA checkpoint."),
             ("FAIL", "A DPIA checkpoint is required and the design declares it is not defined."),
             ("Boundary", "Does not assess DPIA quality, approval, or legal adequacy."),
         ],
@@ -44,8 +45,8 @@ rules = [
         "rows": [
             ("Applicability", "A data_source contains special-category data."),
             ("Input selectors", "pipeline.nodes[*].properties.contains_special_category_data; pipeline.nodes[*].properties.risk_assessment_checkpoint_defined"),
-            ("PASS", "No special-category source exists, or the design defines a risk-assessment checkpoint."),
-            ("FAIL", "Special-category data exists and the risk-assessment checkpoint is not defined."),
+            ("PASS", "No special-category source is declared, or the design defines a risk-assessment checkpoint."),
+            ("FAIL", "Special-category data is declared and the risk-assessment checkpoint is not defined."),
             ("Boundary", "Does not evaluate risk content, mitigations, or residual risk."),
         ],
     },
@@ -54,7 +55,7 @@ rules = [
         "title": "Data-sharing agreement",
         "reference": "GDPR Articles 5, 6, and 28; TK/MUNDAT sharing governance",
         "rows": [
-            ("Applicability", "Personal data is processed and a data_transfer node exists."),
+            ("Applicability", "Personal data is declared and a data_transfer node is included."),
             ("Input selectors", "pipeline.nodes[*].properties.contains_personal_data; pipeline.nodes[*].type == data_transfer; pipeline.nodes[*].properties.data_sharing_agreement_checkpoint_defined"),
             ("PASS", "Transfer is not triggered, or the design defines an agreement checkpoint."),
             ("FAIL", "Personal-data transfer is triggered and the agreement checkpoint is not defined."),
@@ -66,9 +67,9 @@ rules = [
         "title": "Data lineage and provenance",
         "reference": "GDPR Articles 5(2) and 30; TK/MUNDAT traceability",
         "rows": [
-            ("Applicability", "A data_integration node exists."),
+            ("Applicability", "A data_integration node is included."),
             ("Input selectors", "pipeline.nodes[*].type == data_integration; pipeline.nodes[*].properties.lineage_record_defined"),
-            ("PASS", "No integration node exists, or the design identifies a lineage record."),
+            ("PASS", "No integration node is included, or the design identifies a lineage record."),
             ("FAIL", "An integration node does not identify a lineage record."),
             ("Boundary", "Does not verify lineage quality, completeness, or runtime generation."),
         ],

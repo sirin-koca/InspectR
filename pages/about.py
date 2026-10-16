@@ -6,11 +6,11 @@ st.markdown(
     """
     This thesis follows a Design Science Research approach.
 
-    The artifact is not only the Streamlit user interface. 
+    The artifact is not only the Streamlit user interface.
     It consists of several connected elements:
 
     •	the InspectR architecture \n
-    •	the pipeline blueprint representation \n
+    •	the unified pipeline blueprint representation (data schema, pipeline manifest, infrastructure/IaC) \n
     •	the evidence model \n
     •	the Policy-as-Code rules \n
     •	the OPA evaluation mechanism \n
@@ -59,7 +59,7 @@ st.subheader("Compliance Architecture Layers")
 # Layer 1 Card
 with st.container(border=True):
     st.markdown("#### Layer 1 — Regulation (source of truth)")
-    st.markdown("GDPR / AIA articles, recitals, obligations.")
+    st.markdown("GDPR / AIA articles, recitals and obligations.")
 
 st.markdown("⬇️")
 
@@ -76,7 +76,7 @@ st.markdown("⬇️")
 # Layer 3 Card
 with st.container(border=True):
     st.markdown("#### Layer 3 — Policy-as-Code (OPA/Rego)")
-    st.markdown("Executable rules derived from the governance model:")
+    st.markdown("Executable design-time rules derived from the governance model:")
     st.code("deny[msg] { missing_metadata }")
     st.code('require_human_review { ai_component.risk == "high" }')
     st.code("allow { pipeline.step.purpose in approved_purposes }")
