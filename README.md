@@ -106,6 +106,29 @@ No intermediate representation is used in this proof of concept.
 
 ![InspectR architecture](./images/arch-inspectr.jpeg)
 
+### Why a Metadata Catalog is needed
+
+The blueprint describes the planned pipeline, but it should not be the only
+place where metadata is stored. A **Metadata Catalog** is the authoritative
+source for dataset identity, ownership, schemas, sensitivity, processing
+activities and lineage.
+
+This is needed because a value such as `lineage_available: true` only declares
+that lineage exists. A catalog can provide the records behind that declaration:
+which source was used, which transformations occurred, which output was
+produced, and which versions were involved.
+
+The catalog is therefore used to:
+
+1. identify approved datasets and their owners;
+2. provide metadata when the blueprint is created;
+3. link the blueprint to lineage and provenance records;
+4. support traceable evidence during InspectR evaluation.
+
+The catalog is an architectural mechanism supporting accountability and the
+MUNDAT metadata and traceability requirements. It is not itself a specific GDPR
+requirement, and it does not replace legal or runtime verification.
+
 ## 3. The MUNDAT case
 
 MUNDAT is a Trondheim municipal data-sharing use case. A data consumer requests
@@ -157,7 +180,8 @@ It includes:
 - schema fields, PII markers and masking strategies;
 - storage, encryption and retention metadata;
 - DPIA and risk-assessment properties;
-- an integration node with lineage and provenance properties;
+- a metadata catalog reference and an integration node with lineage and
+  provenance properties;
 - an anonymisation step;
 - purpose, contract, recipient and agreement properties;
 - transfer encryption and audit-trail properties.
@@ -259,7 +283,9 @@ data integration node exists
 | No integration node is declared. | **PASS** because this rule is not triggered. |
 
 **What PASS proves:** The blueprint declares lineage availability. It does not
-inspect whether the lineage records are complete or accurate.
+inspect whether the catalog or lineage records are complete or accurate. The
+catalog reference makes the evidence traceable, but the current PoC rule still
+checks the declared `lineage_available` property only.
 
 ### TK-005 — Purpose compatibility
 
