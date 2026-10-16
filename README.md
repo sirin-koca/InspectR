@@ -9,9 +9,8 @@ This version is a proof of concept (PoC) for the TK/MUNDAT municipal data-sharin
 uses a JSON blueprint, Open Policy Agent (OPA), and Rego policy rules to produce
 clear, evidence-based findings.
 
-> **Important:** InspectR checks and can verify what the pipeline structure declares.
-> 
-> It does **not** prove that a control works at runtime or that the organisation is compliant.
+> **Important:**
+> InspectR checks and can verify what the pipeline structure declares. It does **not** prove that a control works at runtime or that the organisation is compliant.
 
 ### Core definitions
 
