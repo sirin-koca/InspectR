@@ -254,6 +254,22 @@ No intermediate representation is used in this proof of concept.
 The rules do not read legal documents or inspect the running pipeline. They
 inspect the structure and properties declared in the blueprint.
 
+### Rule overview
+
+| Rule ID | Rule name | Core purpose | What it does | What it checks exactly | How it checks / supports compliance |
+| --- | --- | --- | --- | --- | --- |
+| **TK-001** | DPIA checkpoint | Ensure high-risk personal-data processing has a planned DPIA checkpoint. | Detects whether a data source is marked as containing both personal data and special-category data. | `data_source.contains_personal_data == true`; `data_source.contains_special_category_data == true`; then a `compliance_gate` must have `dpia_checkpoint_defined == true`. | Returns **PASS** when the checkpoint is defined or no trigger is detected; returns **FAIL** when sensitive processing is declared but a gate explicitly sets the checkpoint to `false`. |
+| **TK-002** | Special-category risk-assessment checkpoint | Ensure sensitive-data processing includes a planned risk-assessment checkpoint. | Finds data sources marked as containing special-category data and tests the related risk checkpoint. | `data_source.contains_special_category_data == true`; then a `compliance_gate` must have `risk_assessment_checkpoint_defined == true`. | Returns **PASS** when the checkpoint is defined or no special-category source is declared; returns **FAIL** when sensitive data is declared but the checkpoint is explicitly `false`. |
+| **TK-003** | Data-sharing agreement checkpoint | Ensure planned personal-data transfers include an agreement checkpoint. | Detects personal data together with a planned `data_transfer` node. | `data_source.contains_personal_data == true`; a `data_transfer` node is present; then a `compliance_gate` must have `data_sharing_agreement_checkpoint_defined == true`. | Returns **PASS** when the agreement checkpoint is defined or no personal-data transfer is detected; returns **FAIL** when the transfer is triggered but the checkpoint is explicitly `false`. |
+| **TK-004** | Lineage and provenance record | Ensure integrated datasets have a traceability record identified in the design. | Finds `data_integration` nodes and checks whether each relevant integration design identifies a lineage record. | `node.type == "data_integration"`; `properties.lineage_record_defined == true`. | Returns **PASS** when a lineage record is declared or no integration node exists; returns **FAIL** when an integration node explicitly sets `lineage_record_defined` to `false`. It checks the declaration only, not catalogue completeness. |
+| **TK-005** | Purpose compatibility review | Ensure intended purpose compatibility is explicitly considered before sharing. | Tests whether each compliance gate declares purpose compatibility; it escalates uncertainty instead of guessing. | For every `compliance_gate`, `purpose_compatibility_declared` must be exactly `true`. | Returns **PASS** when the declaration is true; returns **HUMAN** when it is missing, `null` or `false`, so legal and organisational context can be reviewed. It does not make the legal determination itself. |
+| **TK-006** | Complete sharing safeguards | Ensure the fixed set of sharing safeguards is represented in the planned workflow. | Evaluates one checklist covering the DPIA, risk, agreement, recipient-approval and transfer-encryption controls. | `dpia_check.dpia_checkpoint_defined`; `dpia_check.risk_assessment_checkpoint_defined`; `sharing_assessment.data_sharing_agreement_checkpoint_defined`; `sharing_assessment.recipient_approval_checkpoint_defined`; `share_dataset.encryption_in_transit_configured` must all be exactly `true`. | Returns **PASS** only when all five controls are true; returns **FAIL** when any is missing, `null` or not true. This confirms design declarations, not implementation or runtime operation. |
+
+The rules provide **design-time evidence checks**, not legal certification. A
+`PASS` means that the encoded requirement is represented in the blueprint (or
+that the rule is not triggered); it does not prove that the control has been
+implemented, approved, or operated successfully.
+
 ### How to read the rule matrix
 
 Each rule has its own decision logic. **Not every rule can return all three

@@ -1,5 +1,6 @@
 #
-# TK-002
+# TK-002 : risk-assessment checkpoint
+#
 # GDPR Articles 9 and 35
 #
 # Checks whether special category personal data is involved

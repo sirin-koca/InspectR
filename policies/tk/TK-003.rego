@@ -1,5 +1,6 @@
 #
-# TK-003
+# TK-003 : data-sharing agreement checkpoint
+#
 # Personal data sharing requires data sharing agreement
 # GDPR Articles 5(1)(a), 6, and 28
 #
