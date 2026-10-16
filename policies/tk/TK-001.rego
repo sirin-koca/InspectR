@@ -26,7 +26,7 @@ dpia_checkpoint_value(gate) := object.get(
 	object.get(object.get(gate, "properties", {}), "dpia_completed", null)
 )
 
-# 4. SINGLE COMPLETE RULE DEFINITION: Routes exactly one final status report map to your UI
+# 4. SINGLE COMPLETE RULE DEFINITION: Routes exactly one final status report 
 article := final_report if {
 	# Path A: Fail if a DPIA is required but a checkpoint is not defined
 	dpia_is_legally_required
