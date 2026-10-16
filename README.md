@@ -5,14 +5,32 @@
 InspectR checks whether a planned data pipeline contains the compliance controls
 that its organisation expects **before the pipeline is deployed**.
 
-It is a proof of concept for the TK/MUNDAT municipal data-sharing case. InspectR
+This version is a proof of concept (PoC) for the TK/MUNDAT municipal data-sharing case. InspectR
 uses a JSON blueprint, Open Policy Agent (OPA), and Rego policy rules to produce
 clear, evidence-based findings.
 
-> **Important:** InspectR checks what the pipeline design declares. It does not
-> prove that a control works at runtime or that a legal document is valid.
+> **Important:**
+> InspectR checks and can verify what the pipeline structure declares. It does **not** prove that a control works at runtime or that the organisation is compliant.
 
-## 1. The nature of the data pipelines
+### Core definitions
+
+| Term | Definition |
+| --- | --- |
+| **Blueprint** | A machine-readable description of a planned data pipeline. |
+| **Compliance gate** | A checkpoint that must be completed before a sensitive activity continues. |
+| **Connection** | A link between two nodes showing how data, control or approval moves. |
+| **Data source** | A system or dataset from which the pipeline reads data. |
+| **Design-time compliance** | Checking a planned architecture before deployment or execution. |
+| **Evidence** | A blueprint value or calculated fact used to support a compliance result. |
+| **Infrastructure metadata** | Information about storage, hosting, encryption and retention. |
+| **Node** | One component or activity in the pipeline graph. |
+| **OPA** | Open Policy Agent: the engine that evaluates policy rules against input data. |
+| **Policy** | An organisational interpretation of a legal or governance requirement. |
+| **Rego** | The policy language used to write rules for OPA. |
+| **Runtime compliance** | Checking what happens while a pipeline is operating. |
+| **Static inspection** | Analysis of a document or design without running the pipeline. |
+
+## 1. The nature of data pipelines
 
 A data pipeline is a planned route for data:
 
@@ -22,9 +40,9 @@ request -> identify sources -> extract -> integrate -> protect -> approve -> sha
 
 For example, a municipality may receive a request to combine HR data from
 several systems, remove identifying information, and share a research dataset.
-The pipeline blueprint describes this planned route before it is implemented.
+The pipeline blueprint describes this planned route before implementation.
 
-### How the blueprint is built
+### How the TK-blueprint is built
 
 The blueprint is a JSON document containing a `pipeline` object. The pipeline
 has two main parts:
@@ -48,7 +66,7 @@ Each node has an `id`, a `type`, and `properties`:
 
 ### What the blueprint can describe
 
-| Blueprint element | What it describes | Example |
+| ELEMENT | What it describes | Example |
 | --- | --- | --- |
 | **Node** | A step, system, source or control in the pipeline | `extract_data` |
 | **Node ID** | The unique name used to refer to a node | `health_services` |
@@ -64,24 +82,6 @@ Each node has an `id`, a `type`, and `properties`:
 | **Schema metadata** | The fields and sensitivity of a dataset | `employee_id` is PII |
 | **Connection / edge** | A relationship between two nodes | `from: extract_data` to `integrate_dataset` |
 | **Evidence property** | A value that a policy can inspect | `lineage_available: true` |
-
-### Core definitions
-
-| Term | Simple definition |
-| --- | --- |
-| **Blueprint** | A machine-readable description of a planned data pipeline. |
-| **Compliance gate** | A checkpoint that must be completed before a sensitive activity continues. |
-| **Connection** | A link between two nodes showing how data, control or approval moves. |
-| **Data source** | A system or dataset from which the pipeline reads data. |
-| **Design-time compliance** | Checking a planned architecture before deployment or execution. |
-| **Evidence** | A blueprint value or calculated fact used to support a compliance result. |
-| **Infrastructure metadata** | Information about storage, hosting, encryption and retention. |
-| **Node** | One component or activity in the pipeline graph. |
-| **OPA** | Open Policy Agent: the engine that evaluates policy rules against input data. |
-| **Policy** | An organisational interpretation of a legal or governance requirement. |
-| **Rego** | The policy language used to write rules for OPA. |
-| **Runtime compliance** | Checking what happens while a pipeline is operating. |
-| **Static inspection** | Analysis of a document or design without running the pipeline. |
 
 ## 2. InspectR flow
 
