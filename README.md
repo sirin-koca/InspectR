@@ -30,7 +30,64 @@ clear, evidence-based findings.
 | **Runtime compliance** | Checking what happens while a pipeline is operating. |
 | **Static inspection** | Analysis of a document or design without running the pipeline. |
 
-## 1. The nature of data pipelines
+## 1. The MUNDAT case
+
+MUNDAT is a Trondheim municipal data-sharing use case. A data consumer requests
+data for research, public services or innovation. The municipality must identify
+the relevant systems, assess risks, extract and combine data, protect sensitive
+information, approve the sharing, and deliver the result securely.
+
+The use case includes:
+
+- receiving and assessing a data request;
+- identifying relevant data sources;
+- performing DPIA and risk assessments;
+- extracting and integrating data;
+- anonymising or otherwise protecting sensitive data;
+- checking purpose, recipient and contractual conditions;
+- sharing the final dataset securely.
+
+### InspectR's specific focus
+
+MUNDAT can be interpreted in many ways. This project focuses specifically on:
+
+> **Automating compliance checks at design time, using metadata in a planned data
+> pipeline.**
+
+InspectR does not implement the whole MUNDAT operational process. It demonstrates
+how selected compliance expectations can be translated into inspectable blueprint
+properties and Rego rules.
+
+### The example blueprint
+
+[`data/tk_mundat_data_sharing_v2.json`](./data/tk_mundat_data_sharing_v2.json)
+models this flow:
+
+```text
+request
+  -> classify_request
+  -> dpia_check
+  -> extract_data
+  -> integrate_dataset
+  -> anonymisation
+  -> sharing_assessment
+  -> share_dataset
+```
+
+It includes:
+
+- two data sources: `health_services` and `citizen_registry`;
+- personal-data and special-category-data declarations;
+- schema fields, PII markers and masking strategies;
+- storage, encryption and retention metadata;
+- DPIA and risk-assessment properties;
+- a metadata catalog reference and an integration node with lineage and
+  provenance properties;
+- an anonymisation step;
+- purpose, contract, recipient and agreement properties;
+- transfer encryption and audit-trail properties.
+
+## 2. The nature of data pipelines
 
 A data pipeline is a planned route for data:
 
@@ -83,7 +140,38 @@ Each node has an `id`, a `type`, and `properties`:
 | **Connection / edge** | A relationship between two nodes | `from: extract_data` to `integrate_dataset` |
 | **Evidence property** | A value that a policy can inspect | `lineage_available: true` |
 
-## 2. InspectR flow
+## 3. Metadata Catalogue
+
+The **Metadata Catalogue** is the authoritative reference for the data used by
+the pipeline. It keeps the information needed to understand, govern and trace
+datasets in one place.
+
+It is needed because a blueprint value such as
+`lineage_available: true` only declares that lineage exists. The catalogue
+provides the records behind that declaration: sources, owners, schemas,
+sensitivity, transformations, outputs and versions.
+
+The blueprint references catalogue records when it is built. InspectR can then
+use those references as traceable design-time evidence. The catalogue supports
+accountability and the MUNDAT metadata and traceability requirements; it is not
+itself a specific GDPR requirement and does not replace legal or runtime checks.
+
+### Metadata Catalogue for the MUNDAT blueprint
+
+| Catalogue record | Example reference | What it contains | Used by |
+| --- | --- | --- | --- |
+| **Catalogue** | `catalog:trondheim-mundat` | Authority and available metadata domains | All pipeline metadata |
+| **Dataset** | `dataset:health-services` | Source identity, owner, schema and sensitivity | Data-source selection and risk checks |
+| **Dataset** | `dataset:citizen-registry` | Source identity, owner, schema and sensitivity | Data-source selection and risk checks |
+| **Lineage** | `lineage:tk-mundat-sickleave-v2` | Source-to-process-to-output relationships and transformations | TK-004 |
+| **Provenance** | `provenance:tk-mundat-sickleave-v2` | Processing activity, versions, timestamps and responsibility | Traceability and audit evidence |
+
+In the blueprint, these references appear on the `metadata_catalog`, data-source
+and `integrate_dataset` nodes. The current TK-004 rule still checks
+`lineage_available`; future policy versions can additionally verify that the
+catalogue and lineage references are present and complete.
+
+## 4. InspectR flow
 
 ```mermaid
 flowchart LR
@@ -106,87 +194,7 @@ No intermediate representation is used in this proof of concept.
 
 ![InspectR architecture](./images/arch-inspectr.jpeg)
 
-### Why a Metadata Catalog is needed
-
-The blueprint describes the planned pipeline, but it should not be the only
-place where metadata is stored. A **Metadata Catalog** is the authoritative
-source for dataset identity, ownership, schemas, sensitivity, processing
-activities and lineage.
-
-This is needed because a value such as `lineage_available: true` only declares
-that lineage exists. A catalog can provide the records behind that declaration:
-which source was used, which transformations occurred, which output was
-produced, and which versions were involved.
-
-The catalog is therefore used to:
-
-1. identify approved datasets and their owners;
-2. provide metadata when the blueprint is created;
-3. link the blueprint to lineage and provenance records;
-4. support traceable evidence during InspectR evaluation.
-
-The catalog is an architectural mechanism supporting accountability and the
-MUNDAT metadata and traceability requirements. It is not itself a specific GDPR
-requirement, and it does not replace legal or runtime verification.
-
-## 3. The MUNDAT case
-
-MUNDAT is a Trondheim municipal data-sharing use case. A data consumer requests
-data for research, public services or innovation. The municipality must identify
-the relevant systems, assess risks, extract and combine data, protect sensitive
-information, approve the sharing, and deliver the result securely.
-
-The original use case includes activities such as:
-
-- receiving and assessing a data request;
-- identifying relevant data sources;
-- performing DPIA and risk assessments;
-- extracting and integrating data;
-- anonymising or otherwise protecting sensitive data;
-- checking purpose, recipient and contractual conditions;
-- sharing the final dataset securely.
-
-### InspectR's specific focus
-
-MUNDAT can be interpreted in many ways. This project focuses specifically on:
-
-> **Automating compliance checks at design time, using metadata in a planned data
-> pipeline.**
-
-InspectR does not implement the whole MUNDAT operational process. It demonstrates
-how selected compliance expectations can be translated into inspectable blueprint
-properties and Rego rules.
-
-### The example blueprint
-
-[`data/tk_mundat_data_sharing_v2.json`](./data/tk_mundat_data_sharing_v2.json)
-models this flow:
-
-```text
-request
-  -> classify_request
-  -> dpia_check
-  -> extract_data
-  -> integrate_dataset
-  -> anonymisation
-  -> sharing_assessment
-  -> share_dataset
-```
-
-It includes:
-
-- two data sources: `health_services` and `citizen_registry`;
-- personal-data and special-category-data declarations;
-- schema fields, PII markers and masking strategies;
-- storage, encryption and retention metadata;
-- DPIA and risk-assessment properties;
-- a metadata catalog reference and an integration node with lineage and
-  provenance properties;
-- an anonymisation step;
-- purpose, contract, recipient and agreement properties;
-- transfer encryption and audit-trail properties.
-
-## 4. The six compliance rules
+## 5. The six compliance rules
 
 The rules do not read legal documents or inspect the running pipeline. They
 inspect the structure and properties declared in the blueprint.
@@ -337,7 +345,7 @@ any value is false or missing    -> FAIL
 **What PASS proves:** The blueprint declares all five safeguards. It does not
 test whether the safeguards operate in reality.
 
-## 5. Example evaluation
+## 6. Example evaluation
 
 When the example v2 blueprint is evaluated, the current results are:
 
@@ -350,7 +358,7 @@ When the example v2 blueprint is evaluated, the current results are:
 | TK-005 | **HUMAN** | One compliance gate has no purpose-compatibility value, so review is required. |
 | TK-006 | **PASS** | All five required sharing safeguards are declared as true. |
 
-## 6. Running InspectR
+## 7. Running InspectR
 
 ### Requirements
 
@@ -390,7 +398,7 @@ Get-Content -Raw data\tk_mundat_data_sharing_v2.json |
 Run commands from the repository root because policy and asset paths are
 relative to the current working directory.
 
-## 7. Repository structure
+## 8. Repository structure
 
 | Path | Purpose |
 | --- | --- |
@@ -401,7 +409,7 @@ relative to the current working directory.
 | [`data/`](./data/) | Example blueprints and taxonomy data |
 | [`tk-uc/`](./tk-uc/) | TK/MUNDAT source material |
 
-## 8. Scope and limitations
+## 9. Scope and limitations
 
 InspectR provides **design-time evidence**, not a complete compliance
 certificate. A PASS does not prove that:
