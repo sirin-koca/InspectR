@@ -32,7 +32,7 @@ clear, evidence-based findings.
 
 ## 1. The MUNDAT case
 
-MUNDAT is a Trondheim municipal data-sharing use case. A data consumer requests
+MUNDAT is a data-sharing use case for the municipality of Trondheim. A data consumer requests
 data for research, public services or innovation. The municipality must identify
 the relevant systems, assess risks, extract and combine data, protect sensitive
 information, approve the sharing, and deliver the result securely.
@@ -51,8 +51,7 @@ The use case includes:
 
 MUNDAT can be interpreted in many ways. This project focuses specifically on:
 
-> **Automating compliance checks at design time, using metadata in a planned data
-> pipeline.**
+> **How can we automate compliance checks at design time, using metadata in a planned data pipeline?**
 
 InspectR does not implement the whole MUNDAT operational process. It demonstrates
 how selected compliance expectations can be translated into inspectable blueprint
