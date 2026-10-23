@@ -30,19 +30,20 @@ The architecture is correct for the PoC if it demonstrates that:
 “Correct” does not mean that a result proves legal compliance. It means that the result is correct relative to the explicitly declared operational rule.
 
 ## Meaning of “Novel”
-Novelty should be stated carefully. The project should not claim that Policy-as-Code or OPA itself is novel.
+The project does not claim that Policy-as-Code or OPA itself is novel.
 
 The possible contribution is the combination of:
 
+- architectural mechanism that decouples policy and application logic
 - compliance inspection at pipeline design time;
 - static blueprint evidence;
-- regulatory operationalization;
+- regulatory operationalisation;
 - explainable Policy-as-Code findings;
 - evidence sufficiency handling;
-- `OK / FAIL / HUMAN` decision semantics;
-- separation between legal interpretation, policy encoding, and pipeline representation.
+- `PASS / FAIL / HUMAN` decision semantics;
+- separation of concerns: policy engine, requirements encoding and pipeline representation.
 
-Next steps: 
+NB: 
 1. The thesis still needs a literature and related-work review to establish whether this combination is genuinely novel.
 
 2. Defining formal rule specification for each policy:
@@ -53,7 +54,7 @@ Applicability
 Required evidence
 Blueprint field
 Rego condition
-OK meaning
+PASS meaning
 FAIL meaning
 HUMAN meaning
 Known limitations
