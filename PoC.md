@@ -47,17 +47,17 @@ NB:
 1. The thesis still needs a literature and related-work review to establish whether this combination is genuinely novel.
 
 2. Defining formal rule specification for each policy:
-Rule ID
-Requirement source
-Operational interpretation
-Applicability
-Required evidence
-Blueprint field
-Rego condition
-PASS meaning
-FAIL meaning
-HUMAN meaning
-Known limitations
+- Rule ID
+- Requirement source
+- Operational interpretation
+- Applicability
+- Required evidence
+- Blueprint field
+- Rego condition
+- PASS meaning
+- FAIL meaning
+- HUMAN meaning
+- Known limitations
 
 
 ## Agreed Boundary
