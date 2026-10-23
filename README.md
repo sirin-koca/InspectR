@@ -457,24 +457,6 @@ streamlit run app.py
 Then open the **Evaluation** page, upload a JSON blueprint, and select
 **Run InspectR**.
 
-### Validate the implementation
-
-```powershell
-python -m py_compile app.py src\evaluator.py pages\evaluation.py
-```
-
-Evaluate the example directly with OPA:
-
-```powershell
-Get-Content -Raw data\tk_mundat_data_sharing_v2.json |
-  C:\Tools\OPA\opa.exe eval --format=json `
-    --data policies\tk `
-    --stdin-input data.inspectr.results
-```
-
-Run commands from the repository root because policy and asset paths are
-relative to the current working directory.
-
 ## 8. Repository structure
 
 | Path | Purpose |
@@ -486,16 +468,16 @@ relative to the current working directory.
 | [`data/`](./data/) | Example blueprints and taxonomy data |
 | [`tk-uc/`](./tk-uc/) | TK/MUNDAT source material |
 
-## 9. Scope and limitations
 
-InspectR provides **design-time evidence**, not a complete compliance
-certificate. A PASS does not prove that:
+## 8. Limitations
 
-- a DPIA or risk assessment has been performed or is adequate;
-- a data-sharing agreement is legally valid;
-- a purpose is genuinely compatible;
-- anonymisation prevents re-identification;
-- lineage records are complete;
-- encryption or other controls work at runtime.
+Current PoC implementation deliberately excludes IR.
 
-Human review, document verification and runtime controls are still required.
+---
+
+> Disclaimer:
+InspectR provides **design-time evidence**, not a complete compliance certificate. 
+
+---
+
+sirin-koca 2026 | UIO 
