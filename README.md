@@ -16,7 +16,7 @@ Design Science Research: Hevner et al.’s DSR framework requires a viable artef
 
 <img width="1492" height="536" alt="image" src="https://github.com/user-attachments/assets/dfc7c30a-bbbd-441d-a3bc-ac13b45ab7dd" />
 
-### PoC - current version
+### PoC - the current version
 This version is a proof of concept (PoC) using the TK/MUNDAT municipal data-sharing case. InspectR uses a JSON blueprint, Open Policy Agent (OPA), and Rego policy rules to produce clear, evidence-based findings.
 
 > **Disclaimer:**
