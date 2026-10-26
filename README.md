@@ -1,13 +1,16 @@
 # InspectR
 
-### Design-time compliance inspection for data-pipeline blueprints
+### Compliance-by-design tooling for data pipelines
 
-InspectR checks whether a planned data pipeline contains the compliance controls
-that its organisation expects **before the pipeline is deployed**.
+> Compliance is the act of obeying a law, rule, industry standard, order, or internal policy.
+> _https://dictionary.cambridge.org/dictionary/english/compliance_
 
-This version is a proof of concept (PoC) for the TK/MUNDAT municipal data-sharing case. InspectR
-uses a JSON blueprint, Open Policy Agent (OPA), and Rego policy rules to produce
-clear, evidence-based findings.
+InspectR is a policy engine that checks whether a planned data pipeline structure contains the necessary compliance controls that are expected by the law **before the pipeline is deployed**.
+
+<img width="1492" height="536" alt="image" src="https://github.com/user-attachments/assets/dfc7c30a-bbbd-441d-a3bc-ac13b45ab7dd" />
+
+### PoC - current version
+This version is a proof of concept (PoC) using the TK/MUNDAT municipal data-sharing case. InspectR uses a JSON blueprint, Open Policy Agent (OPA), and Rego policy rules to produce clear, evidence-based findings.
 
 > **Important:**
 > InspectR checks and can verify what the pipeline structure declares. It does **not** prove that a control works at runtime or that the organisation is compliant.
