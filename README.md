@@ -5,21 +5,22 @@
 > Compliance is the act of obeying a law, rule, industry standard, order, or internal policy.
 > _https://dictionary.cambridge.org/dictionary/english/compliance_
 
-InspectR is a policy engine that checks whether a planned data pipeline structure contains the necessary compliance controls that are expected by the law **before the pipeline is deployed**.
+### What is InspectR? 
+InspectR is a policy engine that checks whether a planned data pipeline structure contains the necessary compliance controls that are expected by the law before the pipeline is deployed.
 
 <img width="1492" height="536" alt="image" src="https://github.com/user-attachments/assets/dfc7c30a-bbbd-441d-a3bc-ac13b45ab7dd" />
 
 ### PoC - current version
 This version is a proof of concept (PoC) using the TK/MUNDAT municipal data-sharing case. InspectR uses a JSON blueprint, Open Policy Agent (OPA), and Rego policy rules to produce clear, evidence-based findings.
 
-> **Important:**
+> **Disclaimer:**
 > InspectR checks and can verify what the pipeline structure declares. It does **not** prove that a control works at runtime or that the organisation is compliant.
 
 ### Core definitions
 
 | Term | Definition |
 | --- | --- |
-| **Blueprint** | A machine-readable description of a planned data pipeline. |
+| **Blueprint** | A machine-readable description of a planned data pipeline. (JSON, Argo YAML, Python ...) |
 | **Compliance gate** | A design checkpoint that must be defined before a sensitive activity can be approved for implementation. |
 | **Connection** | A link between two nodes showing how data, control or approval moves. |
 | **Data source** | A system or dataset from which the pipeline reads data. |
