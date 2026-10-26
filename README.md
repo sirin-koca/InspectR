@@ -34,7 +34,7 @@ This version is a proof of concept (PoC) using the TK/MUNDAT municipal data-shar
 | **Runtime compliance** | Checking what happens while a pipeline is operating. |
 | **Static inspection** | Analysis of a document or design without running the pipeline. |
 
-## 1. The MUNDAT case (TK: Trondheim Kommune)
+## Use Case: The MUNDAT case (TK: Trondheim Kommune)
 
 MUNDAT is a data-sharing use case for the municipality of Trondheim. A data consumer requests
 data for research, public services or innovation. The municipality must identify
@@ -57,14 +57,12 @@ MUNDAT can be interpreted in many ways. This project focuses specifically on:
 
 > **How can we automate compliance checks at design time, using metadata in a planned data pipeline?**
 
-InspectR does not implement the whole MUNDAT operational process. It demonstrates
-how selected compliance expectations can be translated into inspectable blueprint
-properties and Rego rules.
+InspectR does not implement the whole MUNDAT operational process. It shows how selected compliance expectations translate into inspectable blueprint properties and Rego rules.
 
 ### The example blueprint
 
 [`data/tk_mundat_data_sharing_v2.json`](./data/tk_mundat_data_sharing_v2.json)
-models this flow:
+This JSON file is the pipeline blueprint for TK, and it models this flow below:
 
 ```text
 request
@@ -98,7 +96,7 @@ on sensitive personal-data sharing. The names `health_services` and
 `citizen_registry` are source-system nodes used to build the Sickleave workflow,
 not alternative names for MUNDAT's two example datasets.
 
-## 2. The nature of data pipelines
+## What is the nature of data pipelines?
 
 A data pipeline is a planned route for data:
 
@@ -106,11 +104,10 @@ A data pipeline is a planned route for data:
 request -> identify sources -> extract -> integrate -> protect -> approve -> share
 ```
 
-For example, a municipality may receive a request to combine HR data from
-several systems, remove identifying information, and share a research dataset.
+For example, a municipality may receive a request to combine HR data from several systems, remove identifying information, and share a research dataset.
 The pipeline blueprint describes this planned route before implementation.
 
-### How the TK blueprint is built
+### How is the TK blueprint built?
 
 The unified blueprint is assembled from three architectural input layers:
 
@@ -145,7 +142,7 @@ Each node has an `id`, a `type`, and `properties`:
 }
 ```
 
-### What the blueprint can describe
+### What can a data pipeline blueprint describe?
 
 | ELEMENT | What it describes | Example |
 | --- | --- | --- |
@@ -166,8 +163,7 @@ Each node has an `id`, a `type`, and `properties`:
 
 ### Design-time meaning of blueprint values
 
-The blueprint describes a **planned** pipeline. Boolean values are therefore
-design declarations:
+The blueprint describes a **planned** pipeline. Boolean values are therefore design declarations:
 
 - `true` means the design includes or requires the named checkpoint or control;
 - `false` means the design explicitly does not include it;
@@ -197,11 +193,9 @@ value of `true` means that the checkpoint or control is defined in the design;
 it does not mean that it has already been completed, approved or technically
 verified.
 
-## 3. Metadata Catalogue
+## Metadata Catalogue
 
-The **Metadata Catalogue** is the authoritative reference for the data used by
-the pipeline. It keeps the information needed to understand, govern and trace
-datasets in one place.
+_The **Metadata Catalogue** is the authoritative reference for the data used by the pipeline. It keeps the information needed to understand, govern and trace datasets in one place._
 
 It is needed because a blueprint value such as
 `lineage_record_defined: true` only declares that the design identifies a
@@ -229,7 +223,7 @@ and `integrate_dataset` nodes. The current TK-004 rule checks
 `lineage_record_defined`; future policy versions can additionally verify that the
 catalogue and lineage references are present and complete.
 
-## 4. InspectR flow
+## InspectR flow
 
 ```mermaid
 flowchart LR
@@ -252,10 +246,9 @@ No intermediate representation is used in this proof of concept.
 
 ![InspectR architecture](./images/arch-inspectr.jpeg)
 
-## 5. The six compliance rules
+## Formal definition of policy rules: The six compliance rules
 
-The rules do not read legal documents or inspect the running pipeline. They
-inspect the structure and properties declared in the blueprint.
+The rules do not read legal documents or inspect the running pipeline. They inspect the structure and properties declared in the blueprint.
 
 ### Rule overview
 
@@ -268,15 +261,11 @@ inspect the structure and properties declared in the blueprint.
 | **TK-005** | Purpose compatibility review | Ensure intended purpose compatibility is explicitly considered before sharing. | Tests whether each compliance gate declares purpose compatibility; it escalates uncertainty instead of guessing. | For every `compliance_gate`, `purpose_compatibility_declared` must be exactly `true`. | Returns **PASS** when the declaration is true; returns **HUMAN** when it is missing, `null` or `false`, so legal and organisational context can be reviewed. It does not make the legal determination itself. |
 | **TK-006** | Complete sharing safeguards | Ensure the fixed set of sharing safeguards is represented in the planned workflow. | Evaluates one checklist covering the DPIA, risk, agreement, recipient-approval and transfer-encryption controls. | `dpia_check.dpia_checkpoint_defined`; `dpia_check.risk_assessment_checkpoint_defined`; `sharing_assessment.data_sharing_agreement_checkpoint_defined`; `sharing_assessment.recipient_approval_checkpoint_defined`; `share_dataset.encryption_in_transit_configured` must all be exactly `true`. | Returns **PASS** only when all five controls are true; returns **FAIL** when any is missing, `null` or not true. This confirms design declarations, not implementation or runtime operation. |
 
-The rules provide **design-time evidence checks**, not legal certification. A
-`PASS` means that the encoded requirement is represented in the blueprint (or
-that the rule is not triggered); it does not prove that the control has been
-implemented, approved, or operated successfully.
+The rules provide **design-time evidence checks**, not legal certification. A `PASS` means that the encoded requirement is represented in the blueprint (or that the rule is not triggered); it does not prove that the control has been implemented, approved, or operated successfully.
 
 ### How to read the rule matrix
 
-Each rule has its own decision logic. **Not every rule can return all three
-statuses**:
+Each rule has its own decision logic. **Not every rule can return all three statuses**:
 
 | Status | Simple meaning |
 | --- | --- |
@@ -425,7 +414,11 @@ any control is false or missing           -> FAIL
 **What PASS proves:** The blueprint defines all five planned safeguards. It does
 not prove that the safeguards are implemented or operate in reality.
 
-## 6. Example evaluation
+## Example evaluation
+
+<img width="1565" height="1005" alt="image" src="https://github.com/user-attachments/assets/3cef10ce-880b-468d-84bd-08d72f060c05" />
+
+<img width="780" height="732" alt="image" src="https://github.com/user-attachments/assets/b2a67023-b4f9-42f9-8596-482d7f9c1478" />
 
 When the example v2 blueprint is evaluated, the current results are:
 
@@ -438,7 +431,7 @@ When the example v2 blueprint is evaluated, the current results are:
 | TK-005 | **HUMAN** | One compliance gate has no purpose-compatibility declaration, so review is required. |
 | TK-006 | **PASS** | All five required sharing checkpoints or controls are defined. |
 
-## 7. Running InspectR
+## Running InspectR
 
 ### Requirements
 
@@ -460,7 +453,7 @@ streamlit run app.py
 Then open the **Evaluation** page, upload a JSON blueprint, and select
 **Run InspectR**.
 
-## 8. Repository structure
+## Repository structure
 
 | Path | Purpose |
 | --- | --- |
@@ -472,7 +465,7 @@ Then open the **Evaluation** page, upload a JSON blueprint, and select
 | [`tk-uc/`](./tk-uc/) | TK/MUNDAT source material |
 
 
-## 8. Limitations
+## Limitations
 
 Current PoC implementation deliberately excludes IR.
 
