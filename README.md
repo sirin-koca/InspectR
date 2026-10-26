@@ -11,6 +11,9 @@ InspectR is a design-time architectural compliance analysis tool that evaluates 
 
 Current version is a proof-of-concept (PoC) design-time inspection artefact that evaluates selected organisational compliance expectations against declared properties of a municipal data-sharing pipeline blueprint, using OPA/Rego and explainable findings.
 
+### Methodology: DSR 
+Design Science Research: Hevner et al.’s DSR framework requires a viable artefact, an important problem, rigorous evaluation, and clear contributions. Working software addresses only part of that framework.
+
 <img width="1492" height="536" alt="image" src="https://github.com/user-attachments/assets/dfc7c30a-bbbd-441d-a3bc-ac13b45ab7dd" />
 
 ### PoC - current version
