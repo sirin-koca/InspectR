@@ -362,8 +362,8 @@ The current PoC has the following boundaries:
 
 ### Requirements
 
-- Windows.
 - Python.
+- Streamlit
 - Dependencies listed in `requirements.txt`.
 - OPA installed at:
 
