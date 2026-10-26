@@ -34,7 +34,7 @@ This version is a proof of concept (PoC) using the TK/MUNDAT municipal data-shar
 | **Runtime compliance** | Checking what happens while a pipeline is operating. |
 | **Static inspection** | Analysis of a document or design without running the pipeline. |
 
-## 1. The MUNDAT case
+## 1. The MUNDAT case (TK: Trondheim Kommune)
 
 MUNDAT is a data-sharing use case for the municipality of Trondheim. A data consumer requests
 data for research, public services or innovation. The municipality must identify
