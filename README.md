@@ -6,7 +6,8 @@
 > _https://dictionary.cambridge.org/dictionary/english/compliance_
 
 ### What is InspectR? 
-InspectR is a policy engine that checks whether a planned data pipeline structure contains the necessary compliance controls that are expected by the law before the pipeline is deployed.
+
+InspectR is a design-time architectural compliance analysis tool that evaluates machine-readable representations of AI/data pipelines against expert-defined Policy-as-Code rules, producing traceable findings and remediation guidance.
 
 <img width="1492" height="536" alt="image" src="https://github.com/user-attachments/assets/dfc7c30a-bbbd-441d-a3bc-ac13b45ab7dd" />
 
