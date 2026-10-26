@@ -62,7 +62,8 @@ InspectR does not implement the whole MUNDAT operational process. It shows how s
 ### The example blueprint
 
 [`data/tk_mundat_data_sharing_v2.json`](./data/tk_mundat_data_sharing_v2.json)
-This JSON file is the pipeline blueprint for TK, and it models this flow below:
+This JSON file is the pipeline blueprint for TK. 
+The blueprint is built using pipeline designer inLUMEN , and it models this flow below:
 
 ```text
 request
