@@ -3,16 +3,16 @@
 ### Compliance-by-design tooling for data pipelines
 
 > Compliance is the act of obeying a law, rule, industry standard, order, or internal policy.
-> _https://dictionary.cambridge.org/dictionary/english/compliance_
+> _[Read more ...](https://dictionary.cambridge.org/dictionary/english/compliance)_
 
 ### What is InspectR? 
 
 InspectR is a design-time architectural compliance analysis tool that evaluates machine-readable representations of AI/data pipelines against expert-defined Policy-as-Code rules, producing traceable findings and remediation guidance.
 
-Current version is a proof-of-concept (PoC) design-time inspection artefact that evaluates selected organisational compliance expectations against declared properties of a municipal data-sharing pipeline blueprint, using OPA/Rego and explainable findings.
+The current version is a proof-of-concept (PoC) design-time inspection artefact that evaluates selected organisational compliance expectations against declared properties of a municipal data-sharing pipeline blueprint, using OPA/Rego and explainable findings.
 
 ### Methodology: DSR 
-Design Science Research: Hevner et al.’s DSR framework requires a viable artefact, an important problem, rigorous evaluation, and clear contributions. Working software addresses only part of that framework.
+Design Science Research: Hevner et al.’s DSR framework requires a viable artefact, an important problem, rigorous evaluation, and clear contributions. Working software addresses only part of that framework. _[Read more ...](https://aisel.aisnet.org/misq/vol28/iss1/6/)_
 
 <img width="1492" height="536" alt="image" src="https://github.com/user-attachments/assets/dfc7c30a-bbbd-441d-a3bc-ac13b45ab7dd" />
 
