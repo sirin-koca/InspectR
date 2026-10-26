@@ -2,15 +2,15 @@
 
 ### Design-time architectural compliance inspection for data pipelines
 
-InspectR is a research prototype for inspecting planned data pipelines against explicitly encoded organizational compliance policies.
+InspectR is a research prototype for inspecting planned data pipelines against explicitly encoded organisational compliance policies.
 
 The tool evaluates a machine-readable pipeline blueprint using Policy-as-Code (PaC) and produces findings with reasons, supporting blueprint evidence, and remediation guidance.
 
-InspectR is being developed as the artifact of an MSc thesis in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses Design Science Research (DSR), with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune.
+InspectR is being developed as the artefact of an MSc thesis in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses **Design Science Research** (DSR) methodology, with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune.
 
-> **Status:** Early-stage research prototype. As of October 2026, artifact development has been underway for approximately four weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. Thesis submission is planned for the end of May 2027.
+> **Status:** Early-stage research prototype. As of October 2026, artefact development has been underway for approximately four weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. Thesis submission is planned for the end of May 2027.
 
-> Assurance boundary: InspectR currently checks what a pipeline blueprint declares. It does not establish that controls have been implemented, that they operate successfully at runtime, or that an organization or processing activity is legally compliant.
+> Assurance boundary: InspectR currently checks what a pipeline blueprint declares. It does not establish that controls have been implemented, that they operate successfully at runtime, or that an organisation or processing activity is legally compliant.
 
 ## Contents
 
@@ -416,3 +416,7 @@ The activation command assumes that a virtual environment already exists at `.ve
 MSc thesis research prototype · University of Oslo · Collaboration with SINTEF  
 Case context: DataPACT MUNDAT, Trondheim Kommune  
 Thesis submission planned: May 2027
+
+---
+
+sirin-koca 2026
