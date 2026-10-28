@@ -6,10 +6,10 @@ InspectR is a research prototype for inspecting planned data pipeline blueprints
 
 The tool evaluates a machine-readable pipeline blueprint using a Policy-as-Code (PaC) framework and produces findings with reasons, supporting pipeline evidence, and remediation guidance.
 
-InspectR is being developed as the artefact of an MSc thesis in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses **Design Science Research** (DSR) methodology, with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune (TK).
+InspectR is being developed as an MSc thesis artefact in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses **Design Science Research** (DSR) methodology, with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune (TK).
 
 > **Status:**
-> Early-stage research prototype. As of October 2026, artefact development has been underway for approximately five weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. Thesis submission is planned for the end of May 2027.
+> Early-stage research prototype. As of October 2026, artefact development has been underway for approximately five weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. The thesis is planned for submission at the end of May 2027.
 
 > Assurance boundary: InspectR currently checks what a pipeline blueprint declares. It does not establish that controls have been implemented, that they operate successfully at runtime, or that an organisation or processing activity is legally compliant.
 
@@ -326,7 +326,7 @@ This example demonstrates prototype behaviour. It is not, by itself, a scientifi
 
 InspectR is being developed using Design Science Research.
 
-The research direction is to investigate how selected compliance expectations can be represented, inspected, and explained during pipeline design.
+The current research direction is to investigate how selected compliance expectations can be represented, inspected, and explained during pipeline design; compliance-by-design.
 
 Evaluation against the MUNDAT case is part of the thesis work. The README does not claim that stakeholder validation or a completed empirical evaluation has already taken place.
 
@@ -341,7 +341,14 @@ Relevant evaluation questions include:
 - What effort is required to prepare the metadata and review the results?
 - Which aspects of the approach transfer beyond the example blueprint?
 
-These are research questions to investigate, not capabilities or benefits already demonstrated.
+### Literature review
+Current research scope:
+- Policy-as-Code (PaC) and Compliance-as-Code: OPA/Rego, Cedar, Kyverno (Kubernetes), formal checking of policies, and compliance checks on Infrastructure-as-Code (IaC).
+- Compliance automation, compliance engineering and GRC engineering: turning legal and regulatory requirements into machine-readable rules (LegalRuleML, ODRL, DPV, ontologies), and LLM-assisted generation of policies from regulations.
+- Compliance-by-design for data and AI pipelines: architectural and design-time compliance, model-driven engineering, data spaces, lineage, and automated DPIAs.
+- AI compliance and AI governance: putting the AI Act into practice, AI auditing and assurance cases.
+- Publications from DataPACT and related EU projects, such as UPCAST and enRichMyData.
+- ...
 
 ## Limitations
 
