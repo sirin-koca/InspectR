@@ -194,10 +194,10 @@ The example contains nodes and typed connections.
 
 The blueprint combines:
 
-- Schema metadata: fields, types, PII markers, and masking strategies.
-- Pipeline metadata: processing steps, purposes, and checkpoints.
-- Infrastructure metadata: storage, encryption, retention, and purge settings.
-- References: catalogue, dataset, lineage, and provenance identifiers.
+- **Schema metadata**: fields, types, PII markers, and masking strategies.
+- **Pipeline metadata**: processing steps, purposes, and checkpoints.
+- **Infrastructure metadata**: storage, encryption, retention, and purge settings.
+- **References**: catalogue, dataset, lineage, and provenance identifiers.
 
 These categories are represented in one JSON document. They are not
 automatically extracted from separate schema, manifest, and IaC files.
@@ -240,9 +240,6 @@ processing activities, lineage, and provenance.
 | `lineage:tk-mundat-sickleave-v2` | Intended lineage-record reference. |
 | `provenance:tk-mundat-sickleave-v2` | Intended provenance-record reference. |
 
-These are blueprint references, not verified external records.
-The current evaluator and policies do not retrieve or validate them.
-
 TK-004 checks the lineage declaration, not catalogue completeness,
 provenance accuracy, or the contents of referenced records.
 
@@ -253,9 +250,7 @@ provenance accuracy, or the contents of referenced records.
 | `input_evidence` | Selected observations, descriptive selectors, expected values, and conditions. |
 | `derived_evidence` | Facts or labels calculated or assigned by the policy. |
 
-This evidence explains the encoded decision. It does not independently
-establish implementation or runtime behaviour.
-
+The evidence explains the encoded decision. 
 Selectors are descriptive strings, not guaranteed executable JSONPath
 expressions. Some policies accept legacy properties as fallbacks, so the
 observed value may originate from a legacy field rather than the preferred
