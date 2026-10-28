@@ -73,7 +73,7 @@ Infrastructure-related metadata is represented within the example blueprint.
 
 ## Architecture
 
-### Current evaluation flow
+### Current evaluation flow (without IR)
 
 ```mermaid
 flowchart LR
@@ -357,13 +357,7 @@ The intended final implementation is broader than the current PoC.
 It is planned to introduce an intermediate representation to separate
 input-specific formats from inspection logic.
 
-```mermaid
-flowchart LR
-    A[Supported pipeline representations] --> B[Input adapters]
-    B --> C[Intermediate representation]
-    C --> D[Validation and inspection]
-    D --> E[Findings and evidence]
-```
+![InspectR architecture](./images/arch-inspectr.jpeg)
 
 The objective is a standalone tool with a common inspection model rather
 than an application tied to one designer export.
