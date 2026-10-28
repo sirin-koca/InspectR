@@ -1,11 +1,11 @@
 # InspectR
 
-### Compliance-by-design for data pipelines using Policy-as-Code
+## Compliance-by-design for data pipelines using Policy-as-Code
 
-InspectR is a research prototype for design-time inspection of data-pipeline
-blueprints. It uses Open Policy Agent (OPA) and Rego to evaluate selected
-metadata conditions and present findings with reasons, supporting evidence,
-and remediation guidance.
+InspectR is a research prototype for design-time inspection of data-pipeline blueprints. It uses Open Policy Agent (OPA) and Rego to evaluate selected
+metadata conditions and present findings with reasons, supporting evidence, and remediation guidance.
+
+A pipeline structure (blueprint) describes how data moves through operations, with dependencies, conditions, and configuration. My research question is: _What information must a pipeline design expose to make a selected requirement machine-checkable?_
 
 > **Status:** Early-stage proof of concept (PoC), October 2026. The current
 > implementation establishes an initial baseline, not the final scope of
@@ -51,18 +51,17 @@ The application, initial policy interpretations, and blueprint enrichment
 were developed by the thesis author. The interpretations have not yet been
 validated by SINTEF, Trondheim Kommune, or legal reviewers.
 
-Thesis submission is planned for the end of May 2027. The final contribution
-and evaluation scope remain under development.
+Planned submission: May 2027. The final contribution and evaluation scope remain under development.
 
 ## Current PoC
 
-The current Streamlit application supports:
+The current application supports:
 
-- Uploading one UTF-8 JSON pipeline blueprint.
+- Uploading a JSON pipeline blueprint and preview.
 - JSON parsing and basic input-structure validation.
 - Evaluation of six initial Rego checks through OPA.
 - Validation of returned result fields and status values.
-- Side-by-side presentation of the blueprint and findings.
+- Side-by-side presentation of the blueprint metadata and findings.
 - Display of policy-provided reasons, evidence, references, and remedies.
 
 The PoC inspects declared node properties. It does not execute pipelines,
@@ -86,8 +85,8 @@ flowchart LR
 
 | Component | Responsibility |
 |---|---|
-| Streamlit interface | Upload, interaction, session state, and presentation. |
-| Python evaluator | Structural checks, OPA invocation, response parsing, and result validation. |
+| Streamlit GUI | Upload, interaction, session state, and presentation. |
+| InspectR Python evaluator | Structural checks, OPA invocation, response parsing,  result validation. |
 | OPA | Execution of Rego policies against the supplied input. |
 | Rego policies | Conditions, decision branches, and finding construction. |
 
@@ -121,20 +120,35 @@ It validates field presence and permitted status values, not legal accuracy,
 evidence correctness, or policy completeness. Execution and response errors
 raise exceptions.
 
-### Evaluation interface
-
-`pages/evaluation.py` displays status counts and expandable findings,
-including input-evidence tables and derived-evidence JSON.
-
-Results are retained in Streamlit session state. A SHA-256 signature supports
-detection of changed upload content; it is not a persistent audit record.
-
-The interface displays evidence returned by Rego. It does not independently
-reconstruct or verify that evidence.
 
 ## Pipeline blueprint
 
 A blueprint is a machine-readable description of a planned pipeline.
+
+### What can a data-pipeline blueprint describe?
+
+A pipeline blueprint can represent planned activities, data relationships,
+configuration, and governance declarations. The information available depends
+on the modelling language, designer, and metadata supplied.
+
+The categories below are an organisational overview, not a universal standard
+or a list of capabilities currently implemented in InspectR.
+
+| Category | Element | What it describes | Example |
+|---|---|---|---|
+| Representation structure | Node | A represented activity, system, dataset, control, or destination. | Extraction activity |
+| Representation structure | Identifier | An identifier for referencing an element within a defined scope. | `extract_data` |
+| Representation structure | Type | The declared category of an element. | `data_source`, `data_transfer` |
+| Representation structure | Property | A declared attribute, configuration value, or reference. | `contains_personal_data: true` |
+| Representation structure | Connection / edge | A typed relationship between elements, with explicitly defined meaning. | Data flow or execution dependency |
+| Data description | Sources and outputs | Systems or datasets consumed or produced by an operation. | HR dataset → aggregated research dataset |
+| Data description | Schema | Field names, types, and structural constraints. | `employee_id: string` |
+| Data description | Classification | Declared sensitivity or governance classifications of datasets or fields. | Personal data; special-category data |
+| Processing and flow | Processing activity | A planned operation and, where specified, its inputs and outputs. | Extraction, filtering, or cleaning |
+| Processing and flow | Integration | A planned combination or harmonisation of data. | Joining datasets |
+| Processing and flow | Dependencies and conditions | Declared ordering, branching, and conditions for proceeding. | Release depends on approval |
+| Processing and flow | Transfer and destination | A planned delivery or publication and its intended endpoint. | Publish an output to an open-data portal |
+| Infrastructure and configuration | Deployment and storage
 
 ### Example and provenance
 
