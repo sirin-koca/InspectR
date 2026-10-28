@@ -2,13 +2,14 @@
 
 ### Design-time architectural compliance inspection for data pipelines
 
-InspectR is a research prototype for inspecting planned data pipelines against explicitly encoded organisational compliance policies.
+InspectR is a research prototype for inspecting planned data pipeline blueprints against explicitly encoded organisational compliance policies.
 
-The tool evaluates a machine-readable pipeline blueprint using Policy-as-Code (PaC) and produces findings with reasons, supporting blueprint evidence, and remediation guidance.
+The tool evaluates a machine-readable pipeline blueprint using a Policy-as-Code (PaC) framework and produces findings with reasons, supporting pipeline evidence, and remediation guidance.
 
-InspectR is being developed as the artefact of an MSc thesis in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses **Design Science Research** (DSR) methodology, with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune.
+InspectR is being developed as the artefact of an MSc thesis in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses **Design Science Research** (DSR) methodology, with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune (TK).
 
-> **Status:** Early-stage research prototype. As of October 2026, artefact development has been underway for approximately four weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. Thesis submission is planned for the end of May 2027.
+> **Status:**
+> Early-stage research prototype. As of October 2026, artefact development has been underway for approximately five weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. Thesis submission is planned for the end of May 2027.
 
 > Assurance boundary: InspectR currently checks what a pipeline blueprint declares. It does not establish that controls have been implemented, that they operate successfully at runtime, or that an organisation or processing activity is legally compliant.
 
@@ -22,7 +23,7 @@ InspectR is being developed as the artefact of an MSc thesis in Systems Architec
 - [Metadata catalogue and evidence](#metadata-catalogue-and-evidence)
 - [Current policy checks](#current-policy-checks)
 - [Interpreting results](#interpreting-results)
-- [Example evaluation](#example-evaluation)
+- [Example inspection](#example-inspection)
 - [Research and evaluation](#research-and-evaluation)
 - [Limitations](#limitations)
 - [Running the prototype](#running-the-prototype)
@@ -33,7 +34,7 @@ InspectR is being developed as the artefact of an MSc thesis in Systems Architec
 
 InspectR investigates how selected compliance expectations can be represented as inspectable properties of a planned pipeline and evaluated before deployment.
 
-The thesis combines artifact development with evaluation in a real project context. SINTEF’s collaboration provides the setting for developing InspectR and validating it against the DataPACT MUNDAT use case.
+The thesis combines artefact development with evaluation in a real project context. SINTEF’s collaboration provides the setting for developing InspectR and validating it against the DataPACT MUNDAT use case.
 
 The current repository documents an initial proof of concept:
 
@@ -43,13 +44,13 @@ The current repository documents an initial proof of concept:
 - A Streamlit interface for uploading a blueprint and viewing findings.
 - Explicit boundaries on what those findings establish.
 
-The scientific contribution, final artifact scope, and evaluation results remain under development. The existence of a working prototype does not, by itself, establish research novelty, general applicability, or practical effectiveness.
+The scientific contribution, final artefact scope, and evaluation results remain under development. The existence of a working prototype does not, by itself, establish research novelty, general applicability, or practical effectiveness.
 
 This README describes the current implementation. Future capabilities should not be inferred from the broader research motivation.
 
 ## Purpose and scope
 
-InspectR supports review of a planned pipeline by asking whether selected controls are represented in its design metadata.
+InspectR supports the review of a planned pipeline by asking whether selected controls are represented in its design metadata.
 
 Examples include:
 
@@ -78,9 +79,9 @@ These questions are narrower than determining legal compliance.
 - Whether anonymisation prevents re-identification.
 - Whether catalogue or lineage records are complete and accurate.
 - Whether declared encryption or other controls operate at runtime.
-- Whether the organization complies with all applicable obligations.
+- Whether the organisation complies with all applicable obligations.
 
-InspectR supports design review. It does not replace legal interpretation, authorized approval, document review, or runtime assurance.
+InspectR supports design review. It does not replace legal interpretation, authorised approval, document review, or runtime assurance.
 
 ## MUNDAT use case
 
@@ -163,9 +164,9 @@ The interface is implemented in Streamlit. Input validation, OPA execution, and 
 
 ## Pipeline blueprint
 
-A blueprint is a machine-readable description of a planned pipeline.
+A blueprint is a machine-readable description of a planned pipeline. 
 
-The broader concept may encompass different pipeline representations. However, the current InspectR input is the JSON blueprint described here. Native inspection of Argo YAML, Python pipelines, or other formats is not established by this PoC.
+The broader concept may encompass different pipeline representations. However, the current InspectR input is the JSON blueprint described here. Native inspection of Argo YAML, Python pipelines, or other formats is not established by this PoC; it is planned for the final artefact implementation.
 
 ### Architectural metadata layers
 
@@ -184,7 +185,7 @@ These are architectural information categories represented together in the examp
 The blueprint contains a `pipeline` object with:
 
 - Nodes: sources, activities, controls, gates, and destinations.
-- Connections: relationships representing data, control, authorization, or approval flows.
+- Connections: relationships representing data, control, authorisation, or approval flows.
 
 A node has an identifier, a type, and properties:
 
@@ -199,7 +200,7 @@ A node has an identifier, a type, and properties:
 }
 ```
 
-The current policy descriptions primarily concern node types and declared properties. The presence of connections in the blueprint should not be interpreted as a claim that all-path coverage, execution ordering, or safeguard-bypass analysis is currently implemented.
+The current policy descriptions primarily concern node types and declared properties. The presence of connections in the blueprint should not be interpreted as a claim that all-path coverage, execution ordering, or safeguard-bypass analysis is implemented.
 
 ### Meaning of declared values
 
@@ -223,9 +224,9 @@ The treatment of missing information varies between the current rules. The proto
 
 ## Metadata catalogue and evidence
 
-The blueprint includes references intended to connect design declarations with catalogue, dataset, lineage, and provenance records.
+The pipeline blueprint includes references intended to connect design declarations with catalogue, dataset, lineage, and provenance records.
 
-Examples include:
+Examples:
 
 ```text
 catalog:trondheim-mundat
@@ -235,7 +236,7 @@ lineage:tk-mundat-sickleave-v2
 provenance:tk-mundat-sickleave-v2
 ```
 
-These references support traceability within the modeled design.
+These references support traceability within the modelled design.
 
 However, a reference or Boolean declaration is not equivalent to independent verification of the referenced artifact.
 
@@ -251,7 +252,7 @@ Within the current PoC, “evidence” means the blueprint values or calculated 
 
 ## Current policy checks
 
-The six checks operationalize selected policy expectations for the example scenario. They are not a comprehensive encoding of GDPR, the AI Act, or all MUNDAT requirements.
+The six checks operationalise selected policy expectations for the example scenario. They are not a comprehensive encoding of GDPR, the AI Act, or all MUNDAT requirements.
 
 Policy-source mappings, stakeholder validation, and coverage must be documented and evaluated as part of the thesis. The policy identifiers alone do not establish legal authority or completeness.
 
@@ -299,13 +300,14 @@ Not every rule produces every result.
 | TK-005 | Request human review when any compliance gate lacks an exactly true purpose-compatibility declaration; pass when its documented conditions are satisfied, including when no gates exist. |
 | TK-006 | Pass only when all five specified controls are exactly true; otherwise fail. |
 
-The TK-001–TK-004 descriptions do not exhaustively specify every combination of absent values or conflicting declarations. Their executable Rego definitions determine implementation behavior; additional cases should be documented through tests.
+The TK-001–TK-004 descriptions do not exhaustively specify every combination of absent values or conflicting declarations. Their executable Rego definitions determine implementation behaviour; additional cases should be documented through tests.
 
 A `PASS` must not be read as a compliance certificate. It can also mean that a rule was not triggered, which is different from finding affirmative evidence of a control.
 
 `HUMAN` is currently produced only by TK-005. It is an evaluation outcome, not a claim that the application implements a complete human-review or approval workflow.
 
-## Example evaluation
+## Example inspection
+- (check and findings based on uploaded pipeline structure - blueprint):
 
 The documented result for the current v2 example is:
 
@@ -318,7 +320,7 @@ The documented result for the current v2 example is:
 | TK-005 | `HUMAN` | A compliance gate lacks a purpose-compatibility declaration. |
 | TK-006 | `PASS` | All five specified safeguard declarations are true. |
 
-This example demonstrates prototype behavior. It is not, by itself, a scientific evaluation of effectiveness, usability, generalizability, or legal adequacy.
+This example demonstrates prototype behaviour. It is not, by itself, a scientific evaluation of effectiveness, usability, generalizability, or legal adequacy.
 
 ## Research and evaluation
 
