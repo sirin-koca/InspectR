@@ -148,7 +148,16 @@ or a list of capabilities currently implemented in InspectR.
 | Processing and flow | Integration | A planned combination or harmonisation of data. | Joining datasets |
 | Processing and flow | Dependencies and conditions | Declared ordering, branching, and conditions for proceeding. | Release depends on approval |
 | Processing and flow | Transfer and destination | A planned delivery or publication and its intended endpoint. | Publish an output to an open-data portal |
-| Infrastructure and configuration | Deployment and storage
+| Infrastructure and configuration | Deployment and storage | Declared hosting, storage, and deployment characteristics. | Storage service and deployment region |
+| Infrastructure and configuration | Security settings | Planned technical protection settings. | Encryption at rest and in transit |
+| Infrastructure and configuration | Retention settings | Declared retention periods and deletion configuration. | Retain for 30 days; purge configured |
+| Governance and safeguards | Purpose and usage restrictions | Intended processing purposes and declared limits on use. | Research purpose; no onward sharing |
+| Governance and safeguards | Roles and access | Declared responsibilities, permissions, and recipient conditions. | Dataset owner; authorised recipient role |
+| Governance and safeguards | Privacy measures | Planned operations intended to protect data. | Aggregation, masking, or anonymisation |
+| Governance and safeguards | Assessment and approval checkpoints | Planned review or authorisation points and their dependencies. | Risk review before release |
+| Traceability and supporting references | Planned lineage | Declared relationships between sources, transformations, and outputs. | Output derived from two specified sources |
+| Traceability and supporting references | Supporting-artifact references | Identifiers or versions of relevant catalogue records, specifications, policies, or review records. | Lineage-record ID; policy version |
+
 
 ### Example and provenance
 
@@ -240,9 +249,6 @@ processing activities, lineage, and provenance.
 | `lineage:tk-mundat-sickleave-v2` | Intended lineage-record reference. |
 | `provenance:tk-mundat-sickleave-v2` | Intended provenance-record reference. |
 
-TK-004 checks the lineage declaration, not catalogue completeness,
-provenance accuracy, or the contents of referenced records.
-
 ### Finding evidence
 
 | Field | Contents |
@@ -270,9 +276,6 @@ Their legal references are not validated mappings to legal obligations.
 | TK-005 | Compliance gates. | Purpose-compatibility declaration. |
 | TK-006 | Three named nodes. | Five specified checkpoint and encryption declarations. |
 
-TK-001–TK-003 detect conditions across the node collection. They do not
-establish that a particular source is connected to a relevant gate or transfer.
-
 TK-006 checks:
 
 ```text
@@ -283,8 +286,38 @@ sharing_assessment.properties.recipient_approval_checkpoint_defined
 share_dataset.properties.encryption_in_transit_configured
 ```
 
-All five resolved values must be exactly `true`; otherwise the rule returns
-`FAIL`. Supported legacy fields are used when preferred fields are absent.
+**FYI**: These are thesis authors' policy interpretations derived from TK documents. They are preliminary design-time checks inspired by selected MUNDAT requirements. 
+
+## Policy traceability record
+For each rule, it is necessary to document: TK source → compliance expectation → organisational / implementation interpretation → encoded check → unverified assumptions → reviewer/status
+
+Tasks: Create one record for each policy rule. Distinguish source requirements, proposed interpretations, and implemented behaviour.
+
+| Field | What to document |
+|---|---|
+| Rule ID and title | Unique identifier and short description. |
+| TK source | Exact section, requirement/user-story ID, page, and relevant wording. |
+| Compliance expectation | What the source asks for, without adding assumptions. |
+| Proposed organisational interpretation | Meaning in the MUNDAT workflow; identify author-proposed interpretations explicitly. |
+| Implementation interpretation | Required metadata, applicability conditions, and intended outcomes. |
+| Encoded check | Rego file/rule, inspected fields, conditions, fallback fields, and actual decision branches. |
+| Evidence and limitations | Where observations come from and what they do—and do not—establish. |
+| Unverified assumptions | Interpretations or design decisions requiring confirmation. |
+| Reviewer / status | Reviewer, scope of review, date, outcome, and unresolved issues. Use “Not reviewed” where applicable. |
+
+### Example: TK-004 — Lineage declaration
+
+| Field | Record |
+|---|---|
+| Rule ID and title | TK-004 — Lineage declaration. |
+| TK source | D5.1 §3.7: TK.US.07, p. 59; TK.FR.05, p. 60. |
+| Compliance expectation | Support lineage and traceability of data and processing operations. |
+| Proposed organisational interpretation | Integration designs should identify a supporting lineage record. Author-proposed; not reviewed. |
+| Implementation interpretation | Represent the lineage-record declaration as a Boolean property on integration nodes. |
+| Encoded check | `TK-004.rego` selects nodes of type `data_integration` and reads `properties.lineage_record_defined`, falling back to `lineage_available` when the preferred field is absent. An explicitly false value triggers FAIL; otherwise a true value can trigger PASS. No integration nodes also produces PASS. Other combinations can leave the report undefined. |
+| Evidence and limitations | The supplied declaration supports the finding. The referenced lineage record is not retrieved or validated. |
+| Unverified assumptions | A Boolean declaration is useful for design review; integration nodes provide an appropriate inspection scope. |
+| Reviewer / status | Not reviewed.
 
 ## Interpreting findings
 
