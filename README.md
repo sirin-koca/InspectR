@@ -1,193 +1,196 @@
 # InspectR
 
-### Design-time architectural compliance inspection for data pipelines
+### Compliance-by-design for data pipelines using Policy-as-Code
 
-InspectR is a research prototype for inspecting planned data pipeline blueprints against explicitly encoded organisational compliance policies.
+InspectR is a research prototype for design-time inspection of data-pipeline
+blueprints. It uses Open Policy Agent (OPA) and Rego to evaluate selected
+metadata conditions and present findings with reasons, supporting evidence,
+and remediation guidance.
 
-The tool evaluates a machine-readable pipeline blueprint using a Policy-as-Code (PaC) framework and produces findings with reasons, supporting pipeline evidence, and remediation guidance.
+> **Status:** Early-stage proof of concept (PoC), October 2026. The current
+> implementation establishes an initial baseline, not the final scope of
+> InspectR. A broader, standalone architecture incorporating an intermediate
+> representation (IR) is planned.
 
-InspectR is being developed as an MSc thesis artefact in Systems Architecture at the University of Oslo, in collaboration with SINTEF. The thesis uses **Design Science Research** (DSR) methodology, with development and evaluation grounded in the DataPACT MUNDAT municipal data-sharing use case involving Trondheim Kommune (TK).
-
-> **Status:**
-> Early-stage research prototype. As of October 2026, artefact development has been underway for approximately five weeks. The current proof of concept establishes an initial implementation baseline; it does not represent the final scope of InspectR or the completed thesis. The thesis is planned for submission at the end of May 2027.
-
-> Assurance boundary: InspectR currently checks what a pipeline blueprint declares. It does not establish that controls have been implemented, that they operate successfully at runtime, or that an organisation or processing activity is legally compliant.
+> Assurance boundary: InspectR checks supplied design information against
+> encoded policy interpretations. It does not establish legal compliance,
+> completed approvals, or the implementation and runtime effectiveness of
+> controls.
 
 ## Contents
 
-- [Research context and project phase](#research-context-and-project-phase)
-- [Purpose and scope](#purpose-and-scope)
-- [MUNDAT use case](#mundat-use-case)
-- [Current architecture](#current-architecture)
+- [Research context](#research-context)
+- [Current PoC](#current-poc)
+- [Architecture](#architecture)
 - [Pipeline blueprint](#pipeline-blueprint)
 - [Metadata catalogue and evidence](#metadata-catalogue-and-evidence)
-- [Current policy checks](#current-policy-checks)
-- [Interpreting results](#interpreting-results)
-- [Example inspection](#example-inspection)
-- [Research and evaluation](#research-and-evaluation)
+- [Policy checks](#policy-checks)
+- [Interpreting findings](#interpreting-findings)
+- [Planned architecture and research directions](#planned-architecture-and-research-directions)
+- [Evaluation status](#evaluation-status)
 - [Limitations](#limitations)
 - [Running the prototype](#running-the-prototype)
 - [Repository structure](#repository-structure)
 - [Terminology](#terminology)
 
-## Research context and project phase
+## Research context
 
-InspectR investigates how selected compliance expectations can be represented as inspectable properties of a planned pipeline and evaluated before deployment.
+InspectR is being developed as an MSc thesis artefact in Systems Architecture
+at the University of Oslo, in collaboration with SINTEF within DataPACT.
 
-The thesis combines artefact development with evaluation in a real project context. SINTEF’s collaboration provides the setting for developing InspectR and validating it against the DataPACT MUNDAT use case.
+The thesis follows Design Science Research (DSR). Its broader motivation is
+compliance automation for data and AI systems, with an emphasis on
+compliance-by-design: identifying relevant design issues before deployment.
 
-The current repository documents an initial proof of concept:
+The research investigates how selected compliance expectations can be
+translated into inspectable architectural information and executable
+Policy-as-Code checks. Development and planned case evaluation are grounded
+in MUNDAT, the Trondheim Kommune municipal data-sharing use case.
 
-- A JSON blueprint representing a municipal data-sharing workflow.
-- Six selected policy checks implemented in Rego.
-- Policy evaluation through Open Policy Agent (OPA).
-- A Streamlit interface for uploading a blueprint and viewing findings.
-- Explicit boundaries on what those findings establish.
+The application, initial policy interpretations, and blueprint enrichment
+were developed by the thesis author. The interpretations have not yet been
+validated by SINTEF, Trondheim Kommune, or legal reviewers.
 
-The scientific contribution, final artefact scope, and evaluation results remain under development. The existence of a working prototype does not, by itself, establish research novelty, general applicability, or practical effectiveness.
+Thesis submission is planned for the end of May 2027. The final contribution
+and evaluation scope remain under development.
 
-This README describes the current implementation. Future capabilities should not be inferred from the broader research motivation.
+## Current PoC
 
-## Purpose and scope
+The current Streamlit application supports:
 
-InspectR supports the review of a planned pipeline by asking whether selected controls are represented in its design metadata.
+- Uploading one UTF-8 JSON pipeline blueprint.
+- JSON parsing and basic input-structure validation.
+- Evaluation of six initial Rego checks through OPA.
+- Validation of returned result fields and status values.
+- Side-by-side presentation of the blueprint and findings.
+- Display of policy-provided reasons, evidence, references, and remedies.
 
-Examples include:
+The PoC inspects declared node properties. It does not execute pipelines,
+inspect actual datasets, enforce runtime decisions, or analyse graph paths.
 
-- Is a DPIA checkpoint declared when the encoded policy trigger is present?
-- Is a risk-assessment checkpoint declared for special-category data?
-- Is a data-sharing agreement checkpoint represented?
-- Does an integration step declare a lineage record?
-- Is purpose compatibility explicitly declared?
-- Are the selected sharing safeguards represented in the blueprint?
+The current input format is JSON. Native inspection of other pipeline
+formats or Infrastructure-as-Code (IaC) files is not implemented.
+Infrastructure-related metadata is represented within the example blueprint.
 
-These questions are narrower than determining legal compliance.
+## Architecture
 
-### What InspectR currently does
+### Current evaluation flow
 
-- Accepts a JSON pipeline blueprint.
-- Performs basic input-structure validation.
-- Evaluates the blueprint directly against six OPA/Rego policy checks.
-- Validates and displays the returned findings.
-- Presents reasons, evidence, and remediation guidance.
+```mermaid
+flowchart LR
+    A[JSON blueprint] --> B[InspectR input validation]
+    B --> C[OPA / Rego evaluation]
+    C --> D[InspectR result validation]
+    D --> E[Streamlit findings]
+```
 
-### What InspectR does not currently establish
+| Component | Responsibility |
+|---|---|
+| Streamlit interface | Upload, interaction, session state, and presentation. |
+| Python evaluator | Structural checks, OPA invocation, response parsing, and result validation. |
+| OPA | Execution of Rego policies against the supplied input. |
+| Rego policies | Conditions, decision branches, and finding construction. |
 
-- Whether a DPIA has been performed or is adequate.
-- Whether a sharing agreement exists, is signed, or is legally sufficient.
-- Whether a declared purpose is legally compatible.
-- Whether anonymisation prevents re-identification.
-- Whether catalogue or lineage records are complete and accurate.
-- Whether declared encryption or other controls operate at runtime.
-- Whether the organisation complies with all applicable obligations.
+InspectR coordinates the inspection workflow; OPA performs policy evaluation.
+The current PoC passes the blueprint directly to OPA without an IR.
 
-InspectR supports design review. It does not replace legal interpretation, authorised approval, document review, or runtime assurance.
+### Evaluator
 
-## MUNDAT use case
+`src/evaluator.py` checks that the input contains a `pipeline` object and a
+`pipeline.nodes` list. It then invokes the configured OPA executable with:
 
-MUNDAT concerns the efficient and compliant sharing of municipal data by Trondheim Kommune.
+```text
+Policy directory: policies/tk
+Query:            data.inspectr.results
+```
 
-A data consumer requests information for purposes such as research, public services, or innovation. The municipality must identify relevant sources, assess risks, prepare and protect the data, approve sharing, and deliver the resulting dataset.
+`policy.rego` aggregates the reports from TK-001–TK-006.
 
-The use-case workflow includes:
+The evaluator requires each returned result to contain:
 
-1. Receiving and assessing a data request.
-2. Identifying relevant systems and datasets.
-3. Considering DPIA and risk-assessment needs.
-4. Extracting and integrating data.
-5. Applying appropriate data-protection measures.
-6. Assessing sharing conditions.
-7. Delivering the dataset securely.
+```text
+rule
+status
+legal_reference
+reason
+evidence
+remedy
+```
 
-InspectR does not implement this entire operational workflow. The current PoC inspects selected design properties associated with it.
+It validates field presence and permitted status values, not legal accuracy,
+evidence correctness, or policy completeness. Execution and response errors
+raise exceptions.
 
-### Current example scenario
+### Evaluation interface
 
-The example blueprint is:
+`pages/evaluation.py` displays status counts and expandable findings,
+including input-evidence tables and derived-evidence JSON.
+
+Results are retained in Streamlit session state. A SHA-256 signature supports
+detection of changed upload content; it is not a persistent audit record.
+
+The interface displays evidence returned by Rego. It does not independently
+reconstruct or verify that evidence.
+
+## Pipeline blueprint
+
+A blueprint is a machine-readable description of a planned pipeline.
+
+### Example and provenance
 
 ```text
 data/tk_mundat_data_sharing_v2.json
 ```
 
-It is built using the inLUMEN pipeline designer and represents the following planned workflow:
+The initial blueprint was created using inLUMEN. V2 was manually enriched
+by the thesis author because the initial export lacked metadata required
+by the proposed checks.
 
-```text
-request
-  → classify_request
-  → dpia_check
-  → extract_data
-  → integrate_dataset
-  → anonymisation
-  → sharing_assessment
-  → share_dataset
-```
+The intended longer-term workflow is for pipeline representations to
+originate from designers or other supported tools. Manual enrichment is
+part of the current experiment, not an established production integration.
 
-The blueprint includes declarations concerning:
+### MUNDAT scenario
 
-- Personal and special-category data.
-- Schema fields, PII markers, and masking strategies.
-- Storage, encryption, and retention.
-- DPIA and risk-assessment checkpoints.
-- Catalogue, lineage, and provenance references.
-- Anonymisation.
-- Purpose, recipient, agreement, and contractual conditions.
-- Transfer encryption and audit trails.
+DataPACT Deliverable D5.1, Section 3.7, identifies:
 
-The MUNDAT description identifies Sickleave and IoT stormwater-sensor datasets. The current example focuses on a sensitive-data-sharing scenario associated with Sickleave; it does not model the IoT scenario.
-
-The blueprint uses source-node identifiers such as `health_services` and `citizen_registry`. These identify elements of the example model. They should not be interpreted as independently verified descriptions of Trondheim Kommune’s operational source systems.
-
-## Current architecture
-
-```mermaid
-flowchart LR
-    A[JSON pipeline blueprint]
-    B[Basic structure validation]
-    C[OPA evaluates Rego policies]
-    D[Result validation]
-    E[Findings with reasons, evidence and remedies]
-
-    A --> B --> C --> D --> E
-```
-
-The current evaluation sequence is:
-
-1. A user uploads a JSON blueprint.
-2. InspectR checks the expected top-level structure, including the `pipeline` object and `pipeline.nodes` list.
-3. InspectR sends the blueprint directly to OPA.
-4. OPA evaluates the policies in `policies/tk/`.
-5. InspectR validates and displays one result for each policy check.
-
-The current PoC does not use an intermediate representation.
-
-The interface is implemented in Streamlit. Input validation, OPA execution, and result validation are handled by the evaluator.
-
-## Pipeline blueprint
-
-A blueprint is a machine-readable description of a planned pipeline. 
-
-The broader concept may encompass different pipeline representations. However, the current InspectR input is the JSON blueprint described here. Native inspection of Argo YAML, Python pipelines, or other formats is not established by this PoC; it is planned for the final artefact implementation.
-
-### Architectural metadata layers
-
-The example combines three kinds of information:
-
-| Layer | Information represented |
+| Dataset | Description |
 |---|---|
-| Data schema | Fields, types, sensitivity classifications, and protection metadata. |
-| Pipeline manifest | Activities, purposes, destinations, dependencies, and checkpoints. |
-| Infrastructure / IaC metadata | Hosting, storage, encryption, retention, and deployment properties. |
+| Sickleave | Research dataset combining sick-leave registration, work-environment surveys, turnover reports, and HR demographic data. |
+| IoT | Stormwater-basin sensor data measuring sand levels. |
 
-These are architectural information categories represented together in the example JSON. They do not imply that the current application automatically extracts or merges separate schema, manifest, and IaC files.
+V2 models a Sickleave-related scenario and explicitly excludes IoT.
 
-### Nodes and connections
+Source identifiers such as `health_services` and `citizen_registry`,
+together with their schemas and configuration values, are illustrative
+modelling assumptions. They are not confirmed municipal system details
+or a validated reproduction of the documented contributing sources.
 
-The blueprint contains a `pipeline` object with:
+### Structure and metadata
 
-- Nodes: sources, activities, controls, gates, and destinations.
-- Connections: relationships representing data, control, authorisation, or approval flows.
+The example contains nodes and typed connections.
 
-A node has an identifier, a type, and properties:
+| Element | Meaning |
+|---|---|
+| Node | A source, activity, checkpoint, control, or destination. |
+| Node ID | Identifier used to reference a particular node. |
+| Node type | Category used by policies to select relevant nodes. |
+| Properties | Metadata and design declarations inspected by policies. |
+| Connection | A declared data, control, authorisation, approval, or metadata relationship. |
+
+The blueprint combines:
+
+- Schema metadata: fields, types, PII markers, and masking strategies.
+- Pipeline metadata: processing steps, purposes, and checkpoints.
+- Infrastructure metadata: storage, encryption, retention, and purge settings.
+- References: catalogue, dataset, lineage, and provenance identifiers.
+
+These categories are represented in one JSON document. They are not
+automatically extracted from separate schema, manifest, and IaC files.
+
+Not all properties are evaluated by the current policies.
+
+### Design declarations
 
 ```json
 {
@@ -200,189 +203,206 @@ A node has an identifier, a type, and properties:
 }
 ```
 
-The current policy descriptions primarily concern node types and declared properties. The presence of connections in the blueprint should not be interpreted as a claim that all-path coverage, execution ordering, or safeguard-bypass analysis is implemented.
+Here, `true` declares that a checkpoint is included in the design. It does
+not establish that an assessment has been performed or approved.
 
-### Meaning of declared values
-
-Blueprint values describe the design, not completed operational activities.
-
-| Value | Design-time meaning |
-|---|---|
-| `true` | The design declares the named checkpoint or control. |
-| `false` | The design explicitly declares that the checkpoint or control is absent. |
-| Missing or `null` | The design does not supply the information. |
-
-For example:
-
-```json
-"dpia_checkpoint_defined": true
-```
-
-means that a DPIA checkpoint is represented in the design. It does not mean that a DPIA has been completed or approved.
-
-The treatment of missing information varies between the current rules. The prototype does not yet provide a uniform uncertainty outcome across all checks.
+For the relevant Boolean properties, `false` declares absence; missing or
+`null` values provide no affirmative declaration. Actual outcome handling
+depends on the rule.
 
 ## Metadata catalogue and evidence
 
-The pipeline blueprint includes references intended to connect design declarations with catalogue, dataset, lineage, and provenance records.
+### Catalogue representation
 
-Examples:
+The example includes a `metadata_catalog` node describing an intended
+reference point for dataset identity, ownership, schemas, sensitivity,
+processing activities, lineage, and provenance.
 
-```text
-catalog:trondheim-mundat
-dataset:health-services
-dataset:citizen-registry
-lineage:tk-mundat-sickleave-v2
-provenance:tk-mundat-sickleave-v2
-```
-
-These references support traceability within the modelled design.
-
-However, a reference or Boolean declaration is not equivalent to independent verification of the referenced artifact.
-
-In particular, the current TK-004 check evaluates:
-
-```text
-lineage_record_defined
-```
-
-It does not establish that the referenced record exists, is complete, or accurately describes the pipeline.
-
-Within the current PoC, “evidence” means the blueprint values or calculated facts used to explain a finding. It does not necessarily mean independently reviewed documentary or runtime evidence.
-
-## Current policy checks
-
-The six checks operationalise selected policy expectations for the example scenario. They are not a comprehensive encoding of GDPR, the AI Act, or all MUNDAT requirements.
-
-Policy-source mappings, stakeholder validation, and coverage must be documented and evaluated as part of the thesis. The policy identifiers alone do not establish legal authority or completeness.
-
-| ID | Check | Current inspection |
-|---|---|---|
-| TK-001 | DPIA checkpoint | Detects a source declaring both personal and special-category data and checks for a DPIA checkpoint declaration. |
-| TK-002 | Risk-assessment checkpoint | Detects declared special-category data and checks for a risk-assessment checkpoint declaration. |
-| TK-003 | Data-sharing agreement checkpoint | Detects declared personal data together with a transfer node and checks for an agreement checkpoint declaration. |
-| TK-004 | Lineage-record declaration | Checks the `lineage_record_defined` property on integration nodes. |
-| TK-005 | Purpose-compatibility declaration | Checks compliance-gate declarations and escalates missing or non-true values to human review. |
-| TK-006 | Sharing safeguards | Checks five specified control declarations on the named workflow nodes. |
-
-### TK-006 checklist
-
-TK-006 requires all of the following values to be exactly `true`:
-
-```text
-dpia_check.dpia_checkpoint_defined
-dpia_check.risk_assessment_checkpoint_defined
-sharing_assessment.data_sharing_agreement_checkpoint_defined
-sharing_assessment.recipient_approval_checkpoint_defined
-share_dataset.encryption_in_transit_configured
-```
-
-Any missing, `null`, or non-true value produces `FAIL`.
-
-This rule is tied to the current workflow’s node identifiers and is not presented as a format-independent inspection of arbitrary architectures.
-
-## Interpreting results
-
-| Result | Meaning in the current prototype |
+| Example reference | Intended role |
 |---|---|
-| `PASS` | The rule’s encoded condition is satisfied, or its triggering condition is not detected. |
-| `FAIL` | The rule identifies a condition treated as a violation of the encoded design expectation. |
-| `HUMAN` | The rule requests human review rather than making an automated determination. |
+| `catalog:trondheim-mundat` | Modelled catalogue identity. |
+| `dataset:health-services` | Record for an illustrative source. |
+| `dataset:citizen-registry` | Record for an illustrative source. |
+| `lineage:tk-mundat-sickleave-v2` | Intended lineage-record reference. |
+| `provenance:tk-mundat-sickleave-v2` | Intended provenance-record reference. |
 
-Not every rule produces every result.
+These are blueprint references, not verified external records.
+The current evaluator and policies do not retrieve or validate them.
 
-### Rule-specific behavior
+TK-004 checks the lineage declaration, not catalogue completeness,
+provenance accuracy, or the contents of referenced records.
 
-| Rules | Documented outcome behavior |
+### Finding evidence
+
+| Field | Contents |
 |---|---|
-| TK-001–TK-003 | Pass when the relevant declaration is true or the trigger is not detected; fail for the documented explicitly false checkpoint condition. |
-| TK-004 | Pass for a declared lineage record or no integration node; fail for an explicitly false lineage declaration. |
-| TK-005 | Request human review when any compliance gate lacks an exactly true purpose-compatibility declaration; pass when its documented conditions are satisfied, including when no gates exist. |
-| TK-006 | Pass only when all five specified controls are exactly true; otherwise fail. |
+| `input_evidence` | Selected observations, descriptive selectors, expected values, and conditions. |
+| `derived_evidence` | Facts or labels calculated or assigned by the policy. |
 
-The TK-001–TK-004 descriptions do not exhaustively specify every combination of absent values or conflicting declarations. Their executable Rego definitions determine implementation behaviour; additional cases should be documented through tests.
+This evidence explains the encoded decision. It does not independently
+establish implementation or runtime behaviour.
 
-A `PASS` must not be read as a compliance certificate. It can also mean that a rule was not triggered, which is different from finding affirmative evidence of a control.
+Selectors are descriptive strings, not guaranteed executable JSONPath
+expressions. Some policies accept legacy properties as fallbacks, so the
+observed value may originate from a legacy field rather than the preferred
+field named in the explanation.
 
-`HUMAN` is currently produced only by TK-005. It is an evaluation outcome, not a claim that the application implements a complete human-review or approval workflow.
+## Policy checks
 
-## Example inspection
-- (check and findings based on uploaded pipeline structure - blueprint):
+The current rules are preliminary author-developed interpretations.
+Their legal references are not validated mappings to legal obligations.
 
-The documented result for the current v2 example is:
-
-| Rule | Result | Interpretation |
+| Rule | Trigger or target | Inspection |
 |---|---|---|
-| TK-001 | `PASS` | The DPIA checkpoint is declared. |
-| TK-002 | `PASS` | The risk-assessment checkpoint is declared. |
-| TK-003 | `PASS` | The agreement checkpoint is declared for the modeled transfer scenario. |
-| TK-004 | `PASS` | The integration design declares a lineage record. |
-| TK-005 | `HUMAN` | A compliance gate lacks a purpose-compatibility declaration. |
-| TK-006 | `PASS` | All five specified safeguard declarations are true. |
+| TK-001 | A source declares personal and special-category data. | DPIA checkpoint declaration. |
+| TK-002 | A source declares special-category data. | Risk-assessment checkpoint declaration. |
+| TK-003 | Personal data and a transfer node are present. | Data-sharing agreement checkpoint declaration. |
+| TK-004 | Integration nodes. | Lineage-record declaration. |
+| TK-005 | Compliance gates. | Purpose-compatibility declaration. |
+| TK-006 | Three named nodes. | Five specified checkpoint and encryption declarations. |
 
-This example demonstrates prototype behaviour. It is not, by itself, a scientific evaluation of effectiveness, usability, generalizability, or legal adequacy.
+TK-001–TK-003 detect conditions across the node collection. They do not
+establish that a particular source is connected to a relevant gate or transfer.
 
-## Research and evaluation
+TK-006 checks:
 
-InspectR is being developed using Design Science Research.
+```text
+dpia_check.properties.dpia_checkpoint_defined
+dpia_check.properties.risk_assessment_checkpoint_defined
+sharing_assessment.properties.data_sharing_agreement_checkpoint_defined
+sharing_assessment.properties.recipient_approval_checkpoint_defined
+share_dataset.properties.encryption_in_transit_configured
+```
 
-The current research direction is to investigate how selected compliance expectations can be represented, inspected, and explained during pipeline design; compliance-by-design.
+All five resolved values must be exactly `true`; otherwise the rule returns
+`FAIL`. Supported legacy fields are used when preferred fields are absent.
 
-Evaluation against the MUNDAT case is part of the thesis work. The README does not claim that stakeholder validation or a completed empirical evaluation has already taken place.
+## Interpreting findings
 
-Research questions, contribution claims, and evaluation scope remain subject to refinement with the academic supervisors, SINTEF, and relevant case stakeholders.
+| Status | Meaning |
+|---|---|
+| `PASS` | An encoded condition is satisfied, or a rule-specific non-trigger branch applies. |
+| `FAIL` | A condition treated as a violation by the encoded rule is detected. |
+| `HUMAN` | Contextual review is requested; currently used only by TK-005. |
 
-Relevant evaluation questions include:
+A `PASS` is not a compliance certificate. A non-trigger result is not
+affirmative evidence that a control exists.
 
-- Do the policies faithfully represent the selected case requirements?
-- Does the blueprint provide sufficient information for those checks?
-- How does inspection behave when information is missing or inconsistent?
-- Do stakeholders correctly understand the findings and their limitations?
-- What effort is required to prepare the metadata and review the results?
-- Which aspects of the approach transfer beyond the example blueprint?
+### Current decision boundaries
 
-### Literature review
-Current research scope:
-- Policy-as-Code (PaC) and Compliance-as-Code: OPA/Rego, Cedar, Kyverno (Kubernetes), formal checking of policies, and compliance checks on Infrastructure-as-Code (IaC).
-- Compliance automation, compliance engineering and GRC engineering: turning legal and regulatory requirements into machine-readable rules (LegalRuleML, ODRL, DPV, ontologies), and LLM-assisted generation of policies from regulations.
-- Compliance-by-design for data and AI pipelines: architectural and design-time compliance, model-driven engineering, data spaces, lineage, and automated DPIAs.
-- AI compliance and AI governance: putting the AI Act into practice, AI auditing and assurance cases.
-- Publications from DataPACT and related EU projects, such as UPCAST and enRichMyData.
-- ...
+- TK-001–TK-003 prioritise an explicitly false relevant checkpoint when
+  triggered; otherwise a true checkpoint can produce `PASS`.
+- TK-004 prioritises an explicitly false lineage declaration; otherwise
+  a true declaration can produce `PASS`. No integration nodes also
+  produces `PASS`.
+- TK-005 produces `HUMAN` if any compliance gate lacks an exactly true
+  resolved purpose declaration. No compliance gates produces `PASS`.
+- TK-006 fails when any of its five resolved values is not exactly true.
+
+Some input combinations can leave reports undefined. Multiple matching
+nodes can also produce conflicting report values. Such conditions may
+prevent evaluation from returning the expected result array; they are not
+automatically converted into `HUMAN`.
+
+`HUMAN` does not represent a completed review or an implemented approval
+workflow. Remedies are policy-authored guidance, not verified legal advice.
+
+## Planned architecture and research directions
+
+### Planned IR-based architecture
+
+The intended final implementation is broader than the current PoC.
+It is planned to introduce an intermediate representation to separate
+input-specific formats from inspection logic.
+
+```mermaid
+flowchart LR
+    A[Supported pipeline representations] --> B[Input adapters]
+    B --> C[Intermediate representation]
+    C --> D[Validation and inspection]
+    D --> E[Findings and evidence]
+```
+
+The objective is a standalone tool with a common inspection model rather
+than an application tied to one designer export.
+
+An IR alone does not guarantee interoperability. Supported adapters,
+metadata mappings, semantics, and policy portability must be implemented
+and evaluated. The exact supported formats remain to be defined.
+
+### Candidate research directions
+
+| Direction | Possible contribution |
+|---|---|
+| Requirement operationalisation | Traceable translation from selected requirements to metadata and executable constraints. |
+| IR and interoperability | A defined representation and mappings supporting consistent inspection across supported inputs. |
+| Architectural control coverage | Inspection of control placement, relevant paths, and bypasses. |
+| Incomplete information | Explicit handling of applicability, missing evidence, and indeterminate assessments. |
+| Evidence and explanations | Findings linked to observed facts, supporting references, and clearly bounded conclusions. |
+
+These are research candidates, not implemented capabilities or established
+novel contributions. Their novelty and value require comparison with
+related research and empirical evaluation.
+
+## Evaluation status
+
+The example blueprint currently supports initial functional testing.
+A systematic test corpus and completed case evaluation are not yet
+documented.
+
+Planned work includes:
+
+- Reviewing case-model fidelity and policy interpretations.
+- Documenting requirement-to-policy traceability.
+- Establishing independently reviewed expected outcomes.
+- Testing valid, invalid, incomplete, and conflicting inputs.
+- Evaluating the selected approach against a defined baseline.
+- Assessing finding interpretation and practical review effort.
+- Evaluating IR mappings and consistency across supported inputs.
+
+The scope will be refined with the supervisors and relevant case stakeholders.
 
 ## Limitations
 
-The current PoC has the following boundaries:
+The current PoC:
 
-- It depends on the accuracy and completeness of supplied metadata.
-- It evaluates selected declarations rather than operational behavior.
-- It covers six scoped policy checks, not all applicable obligations.
-- It does not read or interpret legislation automatically.
-- It does not verify the adequacy of DPIAs, agreements, or anonymisation.
-- It does not establish catalogue or lineage-record correctness.
-- Its result semantics differ between rules.
-- Some checks depend on scenario-specific node identifiers.
-- It does not establish comprehensive graph-path or ordering analysis.
-- It does not include an intermediate representation.
-- Its documented execution setup is Windows-specific.
-- Its research contribution and practical effectiveness remain under evaluation.
+- Depends on supplied metadata and unvalidated policy interpretations.
+- Performs basic structural validation, not complete semantic validation.
+- Does not inspect graph paths or enforce checkpoint ordering.
+- Does not resolve catalogue or supporting-artifact references.
+- Does not verify assessments, agreements, anonymisation, or runtime controls.
+- Handles missing information differently across rules.
+- Can produce undefined or conflicting policy reports for some inputs.
+- Accepts legacy fields with different declaration/completion terminology.
+- Contains some messages and derived labels stronger than the available
+  evidence warrants.
+- Uses fixed node identifiers in TK-006.
+- Uses a fixed Windows OPA executable path.
+- Does not yet implement the planned IR or native multi-format support.
+
+These limitations describe the baseline implementation; they are not
+claims that corrective work has already been completed.
 
 ## Running the prototype
 
-### Requirements
+### Prerequisites
 
-- Python.
-- Streamlit
-- Dependencies listed in `requirements.txt`.
-- OPA installed at:
+- Python and the dependencies in `requirements.txt`.
+- OPA supporting `import rego.v1`.
+- Project pages and assets in their expected repository locations.
+
+The current evaluator invokes:
 
 ```text
 C:\Tools\OPA\opa.exe
 ```
 
+Install OPA there or update the executable path in `src/evaluator.py`.
+Adding OPA to `PATH` alone does not change this configuration.
+
 ### Start the application
 
-Run from the repository root:
+From the repository root, with a virtual environment available at `.venv`:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -390,41 +410,69 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Open the Evaluation page, upload a JSON blueprint, and select Run InspectR.
+Open the Evaluation page, upload the example JSON blueprint, and select
+Run InspectR.
 
-The activation command assumes that a virtual environment already exists at `.venv`.
+### Direct policy evaluation
+
+```powershell
+Get-Content -Raw data\tk_mundat_data_sharing_v2.json |
+  C:\Tools\OPA\opa.exe eval --format=json `
+    --data policies\tk `
+    --stdin-input data.inspectr.results
+```
+
+Run commands from the repository root because policy and asset paths
+are relative.
 
 ## Repository structure
 
-| Path | Purpose |
-|---|---|
-| `app.py` | Streamlit configuration and navigation. |
-| `pages/evaluation.py` | Blueprint upload, evaluation, and result presentation. |
-| `src/evaluator.py` | Input validation, OPA execution, and result validation. |
-| `policies/tk/` | Current MUNDAT Rego policies. |
-| `data/` | Example blueprints and taxonomy data. |
-| `tk-uc/` | MUNDAT source material. |
+```text
+app.py                 Streamlit configuration and navigation
+pages/                 Application and research-documentation pages
+  evaluation.py        Upload, evaluator invocation, and findings
+src/
+  evaluator.py         Input checks, OPA execution, and response processing
+policies/tk/
+  policy.rego          Aggregation of six policy reports
+  TK-*.rego            Inspection rules and report construction
+data/                  Example blueprints and supporting data
+tk-uc/                 MUNDAT source material
+images/                Application images and logos
+requirements.txt       Python dependencies
+```
 
 ## Terminology
 
-| Term | Meaning in InspectR |
+Definitions below describe usage within this project.
+
+| Term | Meaning |
 |---|---|
-| Blueprint | Machine-readable representation of a planned pipeline; currently JSON. |
-| Policy | An encoded organizational interpretation of a selected requirement. |
-| Compliance gate | A checkpoint represented in the planned workflow. |
-| Design declaration | Metadata stating that a control or checkpoint is included in the design. |
-| Design-time inspection | Evaluation of the blueprint before pipeline execution. |
-| Evidence | Blueprint values or calculated facts supporting a finding. |
-| Finding | A policy-evaluation result with an explanation and remediation guidance. |
-| OPA | Open Policy Agent, the policy-evaluation engine. |
-| Rego | The language used to implement the current policies. |
-| Runtime assurance | Evidence concerning actual execution or control operation; outside the current PoC. |
+| Compliance-by-design | Considering compliance expectations during design. |
+| Requirement | An expectation the design should address. |
+| Policy interpretation | A scoped interpretation translated into inspection logic. |
+| Constraint | A precise condition evaluated over a representation. |
+| Policy-as-Code | Executable representation of policy conditions; currently Rego. |
+| Blueprint | Machine-readable description of a planned pipeline. |
+| Intermediate representation | Planned common model separating input formats from inspection logic. |
+| Dataset | A collection of data, such as Sickleave. |
+| Data source | A system or dataset acting as input to an operation. |
+| Control | A safeguard intended to address a risk or requirement. |
+| Checkpoint / gate | A planned assessment or approval point; declaration does not establish enforcement. |
+| Evidence | Input observations or derived facts supporting an assessment. |
+| Metadata catalogue | Reference structure for descriptive and governance records. |
+| Lineage | Relationships describing data origins and transformations. |
+| Provenance | Information about origin and processing history. |
+| Finding | A policy result and its explanatory fields. |
+| OPA | Policy-evaluation engine used by InspectR. |
+| Evaluator | Python integration coordinating OPA execution and result processing. |
+| Infrastructure-as-Code | Infrastructure configuration expressed as code; not natively inspected by the PoC. |
 
 ---
 
 MSc thesis research prototype · University of Oslo · Collaboration with SINTEF  
 Case context: DataPACT MUNDAT, Trondheim Kommune  
-Thesis submission planned: May 2027
+Planned thesis submission: May 2027
 
 ---
 
