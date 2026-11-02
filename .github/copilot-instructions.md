@@ -40,17 +40,18 @@ test; substitute another blueprint under `data\` to check a different input.
 - [`app.py`](../app.py) configures the Streamlit application, global CSS,
   session state, and the `st.Page` navigation list.
 - `pages\` contains the UI pages. [`pages/evaluation.py`](../pages/evaluation.py)
-  uploads two JSON blueprints, hashes uploads to invalidate stale results,
-  invokes the evaluator independently for each file, and renders evidence and
-  rule-by-rule comparisons.
+  uploads a JSON blueprint, hashes the upload to invalidate stale results,
+  invokes the evaluator, and renders results with evidence.
+- [`src/catalog.py`](../src/catalog.py) is the single description of the rule
+  set and status model used by the pages. Update it whenever a rule changes;
+  `tests/test_evaluator.py` checks it against the Rego manifest.
 - [`src/evaluator.py`](../src/evaluator.py) is the Python/OPA boundary. It
-  validates the minimum blueprint shape, runs OPA against the TK policy
-  directory, parses `data.inspectr.results`, and validates the returned result
-  contract before Streamlit displays anything.
+  validates the minimum blueprint shape, reads `data.inspectr.manifest`, runs
+  one OPA query per rule, and validates each result. A failing rule becomes an
+  `ERROR` result for that rule only.
 - [`policies/tk/policy.rego`](../policies/tk/policy.rego) is the active policy
-  aggregator. It returns the six rule reports from `TK-001.rego` through
-  `TK-006.rego`; policy decisions belong in Rego rather than being hard-coded
-  in Python or page code.
+  manifest and aggregator for `TK-R1.rego` to `TK-R3.rego`. Policy decisions
+  belong in Rego rather than being hard-coded in Python or page code.
 - [`data/`](../data/) contains example inLUMEN-style blueprints and taxonomy
   data. [`tk-uc/`](../tk-uc/) contains source/use-case material, while
   [`assets/`](../assets/) contains supplementary catalogs that are not the
@@ -62,33 +63,35 @@ overall flow is:
 
 ```text
 uploaded JSON -> Streamlit session state -> Python shape validation
--> OPA/Rego evaluation -> validated PASS/FAIL/HUMAN reports -> evidence UI
+-> OPA/Rego evaluation (one query per rule) -> validated results -> evidence UI
 ```
 
 ## Code and Policy Conventions
 
 - Preserve the result contract expected by `src\evaluator.py`:
   `rule`, `status`, `legal_reference`, `reason`, `evidence`, and `remedy`.
-  Status values are exactly `PASS`, `FAIL`, or `HUMAN`.
+  Status values are exactly `PASS`, `FAIL`, `UNKNOWN`, `HUMAN`,
+  `NOT_APPLICABLE`, or `ERROR` (see `src/catalog.py`).
 - Keep evidence explainable. Input evidence should identify the blueprint
   selector and observed/expected values; derived evidence should describe
   conclusions calculated by Rego. Remedies may be human-readable or structured
   when the policy requires an actionable change.
-- Add or change compliance logic in the relevant `policies\tk\TK-00X.rego`
-  module and register it in `policies\tk\policy.rego`. Keep Python focused on
+- Add or change compliance logic in the relevant `policies\tk\TK-RN.rego`
+  module, register it in the `manifest` and `results` of
+  `policies\tk\policy.rego`, describe it in `src/catalog.py`, and add one
+  test per decision-table row in `policies\tk\tests\rules_test.rego`. Keep Python focused on
   orchestration, validation, and presentation.
-- Rego modules use `import rego.v1`, package names under
-  `inspectr.tk.tkNNN`, and an `article` report consumed by the aggregator.
-  Preserve the existing rule IDs and `RULE_ORDER` in the evaluation page when
-  adding rules or changing their order.
+- Rego modules use `import rego.v1`, package names under `inspectr.tk.rN`,
+  shared helpers from `inspectr.lib`, a `default result` with status `ERROR`,
+  and a `result` built as an ordered `else` chain (one branch per row).
 - Streamlit pages communicate through `st.session_state`; avoid relying on
   module-level mutable state for uploaded blueprints or evaluation results.
   When an upload changes, clear results associated with that upload.
 - Use the existing page registration in `app.py` for user-facing pages. Keep
   explanatory/research content separate from executable policy behavior.
-- Treat missing or ambiguous blueprint evidence conservatively: distinguish
-  automated failure from a result that requires human review, rather than
-  silently treating missing evidence as success.
+- Treat undetermined blueprint evidence (absent, null, not a boolean) as
+  `UNKNOWN`, never as `PASS` or `NOT_APPLICABLE`. Use `HUMAN` only when the
+  evidence is present but the decision is a legal judgement.
 - Keep policy and asset paths compatible with execution from the repository
   root. If path handling is changed, update both the runtime code and the
   documented commands.

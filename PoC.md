@@ -11,7 +11,7 @@ The contribution can be evaluated through:
 - independent OPA/Rego decision evaluation;
 - explicit evidence requirements;
 - traceability from requirement to executable rule;
-- distinction between `OK`, `FAIL`, and `HUMAN`;
+- distinction between `PASS`, `FAIL`, `UNKNOWN`, `HUMAN`, and `NOT_APPLICABLE` (plus `ERROR` for tool faults);
 - conservative treatment of missing or ambiguous evidence;
 - applicability to pipeline design before execution;
 - use of a realistic municipal data-sharing case.
@@ -40,7 +40,7 @@ The possible contribution is the combination of:
 - regulatory operationalisation;
 - explainable Policy-as-Code findings;
 - evidence sufficiency handling;
-- `PASS / FAIL / HUMAN` decision semantics;
+- `PASS / FAIL / UNKNOWN / HUMAN / NOT_APPLICABLE` decision semantics, plus `ERROR` for tool faults;
 - separation of concerns: policy engine, requirements encoding and pipeline representation.
 
 NB: 
@@ -57,6 +57,8 @@ NB:
 - PASS meaning
 - FAIL meaning
 - HUMAN meaning
+- UNKNOWN meaning
+- NOT_APPLICABLE meaning
 - Known limitations
 
 
