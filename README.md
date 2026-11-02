@@ -144,7 +144,6 @@ The rules are unreviewed interpretations; legal references are not validated map
 2. Should a design with special-category data and no compliance gate be FAIL (current) or UNKNOWN?
 3. Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?
 4. Who at SINTEF or TK can review the three rules for fidelity (AC7)?
-5. Is there any confidentiality restriction on deriving rules from TK documents in a public repository?
 
 ## Running
 
