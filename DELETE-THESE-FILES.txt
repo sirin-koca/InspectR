@@ -1,0 +1,6 @@
+policies/tk/TK-001.rego
+policies/tk/TK-002.rego
+policies/tk/TK-003.rego
+policies/tk/TK-004.rego
+policies/tk/TK-005.rego
+policies/tk/TK-006.rego

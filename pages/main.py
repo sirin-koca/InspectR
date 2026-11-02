@@ -74,7 +74,7 @@ with col3:
     st.info(
     """ 
     - Blueprint + policy -> decision\n\n
-    - PASS/FAIL/HUMAN output with evidence, reason, and remedy.
+    - One status per rule: PASS / FAIL / UNKNOWN / HUMAN / NOT_APPLICABLE (ERROR for tool faults), with evidence, reason, and remedy.
     - OPA engine independently evaluates the static blueprint against Rego conditions.
     """
     )    
@@ -100,6 +100,6 @@ with col5:
     - **Coverage** — % of legal rules that are statically checkable
     - **Evidence sufficiency** — availability and completeness of required blueprint evidence
     - **Explainability** — traceability from requirement to rule, evidence, result, and remedy
-    - **Tri-state behaviour** — `PASS / FAIL / HUMAN` classifications and documented limits"""
+    - **Status behaviour** — every input reaches exactly one status; undetermined facts never yield `PASS`"""
     )
 st.divider()

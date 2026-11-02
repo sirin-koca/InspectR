@@ -1,0 +1,59 @@
+{
+  "id": "TK.MUNDAT.PolicyScope",
+  "label": "TK/MUNDAT InspectR Policy Scope",
+  "level": "Root",
+  "description": "Three design-time TK/MUNDAT policy rules evaluated by the InspectR PoC (rule set tk-v2.0)",
+  "scope": "PoC",
+  "children": [
+    {
+      "id": "TK-R1",
+      "label": "TK-R1 — DPIA and risk-assessment checkpoint",
+      "level": "Rule",
+      "description": "IF a data_source declares contains_special_category_data: true THEN one compliance_gate declares dpia_checkpoint_defined: true and risk_assessment_checkpoint_defined: true.",
+      "rule_id": "TK-R1",
+      "legal_references": [
+        "GDPR Art. 35(1), Art. 35(3)(b), Art. 9"
+      ],
+      "relationship": "TK/MUNDAT operational proxy (declared evidence)",
+      "evidence_fields": [
+        "pipeline.nodes[type==data_source].properties.contains_special_category_data",
+        "pipeline.nodes[type==compliance_gate].properties.dpia_checkpoint_defined",
+        "pipeline.nodes[type==compliance_gate].properties.risk_assessment_checkpoint_defined"
+      ],
+      "color": "#FF77DC"
+    },
+    {
+      "id": "TK-R2",
+      "label": "TK-R2 — Lineage record for integrated data",
+      "level": "Rule",
+      "description": "IF the design contains a data_integration node THEN every data_integration node declares lineage_record_defined: true.",
+      "rule_id": "TK-R2",
+      "legal_references": [
+        "GDPR Art. 5(2), Art. 30"
+      ],
+      "relationship": "TK/MUNDAT operational proxy (derivable evidence)",
+      "evidence_fields": [
+        "pipeline.nodes[type==data_integration]",
+        "pipeline.nodes[type==data_integration].properties.lineage_record_defined"
+      ],
+      "color": "#62C370"
+    },
+    {
+      "id": "TK-R3",
+      "label": "TK-R3 — Purpose compatibility before sharing",
+      "level": "Rule",
+      "description": "IF a data_transfer node exists and a data_source declares contains_personal_data: true THEN the compliance gates that carry purpose_compatibility_declared all declare true.",
+      "rule_id": "TK-R3",
+      "legal_references": [
+        "GDPR Art. 5(1)(b), Art. 6(4)"
+      ],
+      "relationship": "TK/MUNDAT operational proxy (judgement evidence)",
+      "evidence_fields": [
+        "pipeline.nodes[type==data_transfer]",
+        "pipeline.nodes[type==data_source].properties.contains_personal_data",
+        "pipeline.nodes[type==compliance_gate].properties.purpose_compatibility_declared"
+      ],
+      "color": "#A66DD4"
+    }
+  ]
+}

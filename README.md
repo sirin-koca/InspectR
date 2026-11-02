@@ -59,7 +59,7 @@ The current application supports:
 
 - Uploading a JSON pipeline blueprint and preview.
 - JSON parsing and basic input-structure validation.
-- Evaluation of six initial Rego checks through OPA.
+- Evaluation of three Rego rules (rule set `tk-v2.0`) through OPA.
 - Validation of returned result fields and status values.
 - Side-by-side presentation of the blueprint metadata and findings.
 - Display of policy-provided reasons, evidence, references, and remedies.
@@ -95,15 +95,20 @@ The current PoC passes the blueprint directly to OPA without an IR.
 
 ### Evaluator
 
-`src/evaluator.py` checks that the input contains a `pipeline` object and a
-`pipeline.nodes` list. It then invokes the configured OPA executable with:
+`src/evaluator.py` checks that the input is a JSON object with a `pipeline`
+object, a `pipeline.nodes` list, and a string `id` on every node. An
+unreadable blueprint raises an input error and no rule is evaluated.
+
+The evaluator then reads the rule manifest and queries each rule separately:
 
 ```text
 Policy directory: policies/tk
-Query:            data.inspectr.results
+Manifest:         data.inspectr.manifest
+Per rule:         data.inspectr.tk.r1.result, ...r2.result, ...r3.result
 ```
 
-`policy.rego` aggregates the reports from TK-001–TK-006.
+`policy.rego` also exposes `data.inspectr.results` (all three results) for
+direct use with `opa eval`.
 
 The evaluator requires each returned result to contain:
 
@@ -117,8 +122,9 @@ remedy
 ```
 
 It validates field presence and permitted status values, not legal accuracy,
-evidence correctness, or policy completeness. Execution and response errors
-raise exceptions.
+evidence correctness, or policy completeness. If a single rule fails (OPA
+error, undefined or conflicting result, malformed result), that rule returns
+`ERROR` and the other results are kept.
 
 
 ## Pipeline blueprint
@@ -258,33 +264,25 @@ processing activities, lineage, and provenance.
 
 The evidence explains the encoded decision. 
 Selectors are descriptive strings, not guaranteed executable JSONPath
-expressions. Some policies accept legacy properties as fallbacks, so the
-observed value may originate from a legacy field rather than the preferred
-field named in the explanation.
+expressions. The observed value `"<absent>"` means the field is not in the
+blueprint. No legacy fallback fields are accepted.
 
 ## Policy checks
 
 The current rules are preliminary author-developed interpretations.
 Their legal references are not validated mappings to legal obligations.
 
-| Rule | Trigger or target | Inspection |
-|---|---|---|
-| TK-001 | A source declares personal and special-category data. | DPIA checkpoint declaration. |
-| TK-002 | A source declares special-category data. | Risk-assessment checkpoint declaration. |
-| TK-003 | Personal data and a transfer node are present. | Data-sharing agreement checkpoint declaration. |
-| TK-004 | Integration nodes. | Lineage-record declaration. |
-| TK-005 | Compliance gates. | Purpose-compatibility declaration. |
-| TK-006 | Three named nodes. | Five specified checkpoint and encryption declarations. |
+Rule set `tk-v2.0`. Each rule has the form IF trigger THEN control.
 
-TK-006 checks:
+| Rule | Replaces | Trigger | Control | Statuses |
+|---|---|---|---|---|
+| TK-R1 | TK-001, TK-002 | A source declares special-category data. | One compliance gate declares DPIA and risk-assessment checkpoints. | PASS, FAIL, UNKNOWN, NOT_APPLICABLE |
+| TK-R2 | TK-004 | An integration node exists. | Every integration node declares a lineage record. | PASS, FAIL, UNKNOWN, NOT_APPLICABLE |
+| TK-R3 | TK-005 | A transfer node exists and a source declares personal data. | Gates carrying the field declare purpose compatibility. | HUMAN, FAIL, UNKNOWN, NOT_APPLICABLE |
 
-```text
-dpia_check.properties.dpia_checkpoint_defined
-dpia_check.properties.risk_assessment_checkpoint_defined
-sharing_assessment.properties.data_sharing_agreement_checkpoint_defined
-sharing_assessment.properties.recipient_approval_checkpoint_defined
-share_dataset.properties.encryption_in_transit_configured
-```
+TK-003 and TK-006 were dropped. The reasons and the full list of fixes are in
+`docs/RULESET-V2-CHANGES.md`. The decision table of each rule is in the header
+comment of its Rego file.
 
 **FYI**: These are thesis authors' policy interpretations derived from TK documents. They are preliminary design-time checks inspired by selected MUNDAT requirements. 
 
@@ -305,46 +303,36 @@ Tasks: Create one record for each policy rule. Distinguish source requirements, 
 | Unverified assumptions | Interpretations or design decisions requiring confirmation. |
 | Reviewer / status | Reviewer, scope of review, date, outcome, and unresolved issues. Use “Not reviewed” where applicable. |
 
-### Example: TK-004 — Lineage declaration
+### Example: TK-R2 — Lineage record for integrated data
 
 | Field | Record |
 |---|---|
-| Rule ID and title | TK-004 — Lineage declaration. |
+| Rule ID and title | TK-R2 — Lineage record for integrated data (replaces TK-004). |
 | TK source | D5.1 §3.7: TK.US.07, p. 59; TK.FR.05, p. 60. |
 | Compliance expectation | Support lineage and traceability of data and processing operations. |
 | Proposed organisational interpretation | Integration designs should identify a supporting lineage record. Author-proposed; not reviewed. |
 | Implementation interpretation | Represent the lineage-record declaration as a Boolean property on integration nodes. |
-| Encoded check | `TK-004.rego` selects nodes of type `data_integration` and reads `properties.lineage_record_defined`, falling back to `lineage_available` when the preferred field is absent. An explicitly false value triggers FAIL; otherwise a true value can trigger PASS. No integration nodes also produces PASS. Other combinations can leave the report undefined. |
+| Encoded check | `TK-R2.rego` selects nodes of type `data_integration` and reads `properties.lineage_record_defined`. No integration node: NOT_APPLICABLE. Any node with `false`: FAIL. Any node with the field absent, null, or not a boolean: UNKNOWN. All nodes `true`: PASS. No fallback fields. |
 | Evidence and limitations | The supplied declaration supports the finding. The referenced lineage record is not retrieved or validated. |
 | Unverified assumptions | A Boolean declaration is useful for design review; integration nodes provide an appropriate inspection scope. |
 | Reviewer / status | Not reviewed.
 
 ## Interpreting findings
 
+Each fact a rule reads is true, false, or undetermined (absent, null, or not
+a boolean).
+
 | Status | Meaning |
 |---|---|
-| `PASS` | An encoded condition is satisfied, or a rule-specific non-trigger branch applies. |
-| `FAIL` | A condition treated as a violation by the encoded rule is detected. |
-| `HUMAN` | Contextual review is requested; currently used only by TK-005. |
+| `PASS` | The obligation applies and every required control is declared `true`. |
+| `FAIL` | The obligation applies and a required control is declared `false`. |
+| `UNKNOWN` | A fact the rule needs is undetermined. |
+| `HUMAN` | Everything checkable is declared; the final decision is a legal judgement (TK-R3 only). |
+| `NOT_APPLICABLE` | The trigger facts are declared `false`; the obligation does not apply. |
+| `ERROR` | InspectR could not evaluate the rule. Not a finding about the blueprint. |
 
-A `PASS` is not a compliance certificate. A non-trigger result is not
-affirmative evidence that a control exists.
-
-### Current decision boundaries
-
-- TK-001–TK-003 prioritise an explicitly false relevant checkpoint when
-  triggered; otherwise a true checkpoint can produce `PASS`.
-- TK-004 prioritises an explicitly false lineage declaration; otherwise
-  a true declaration can produce `PASS`. No integration nodes also
-  produces `PASS`.
-- TK-005 produces `HUMAN` if any compliance gate lacks an exactly true
-  resolved purpose declaration. No compliance gates produces `PASS`.
-- TK-006 fails when any of its five resolved values is not exactly true.
-
-Some input combinations can leave reports undefined. Multiple matching
-nodes can also produce conflicting report values. Such conditions may
-prevent evaluation from returning the expected result array; they are not
-automatically converted into `HUMAN`.
+A `PASS` is not a compliance certificate; it means the design declares the
+control. An undetermined fact never produces `PASS`.
 
 `HUMAN` does not represent a completed review or an implemented approval
 workflow. Remedies are policy-authored guidance, not verified legal advice.
@@ -407,13 +395,9 @@ The current PoC:
 - Does not inspect graph paths or enforce checkpoint ordering.
 - Does not resolve catalogue or supporting-artifact references.
 - Does not verify assessments, agreements, anonymisation, or runtime controls.
-- Handles missing information differently across rules.
-- Can produce undefined or conflicting policy reports for some inputs.
-- Accepts legacy fields with different declaration/completion terminology.
-- Contains some messages and derived labels stronger than the available
-  evidence warrants.
-- Uses fixed node identifiers in TK-006.
-- Uses a fixed Windows OPA executable path.
+- Reads node `type`; a raw inLUMEN export uses `kind`, so TK-R2 and TK-R3
+  return NOT_APPLICABLE on it until an adapter maps the export.
+- Covers three TK requirements; TK-003 (data-sharing agreement) is not encoded.
 - Does not yet implement the planned IR or native multi-format support.
 
 These limitations describe the baseline implementation; they are not
@@ -427,14 +411,8 @@ claims that corrective work has already been completed.
 - OPA supporting `import rego.v1`.
 - Project pages and assets in their expected repository locations.
 
-The current evaluator invokes:
-
-```text
-C:\Tools\OPA\opa.exe
-```
-
-Install OPA there or update the executable path in `src/evaluator.py`.
-Adding OPA to `PATH` alone does not change this configuration.
+The evaluator looks for OPA in this order: the `OPA_PATH` environment
+variable, `opa` on `PATH`, then `C:\Tools\OPA\opa.exe`.
 
 ### Start the application
 
@@ -453,13 +431,20 @@ Run InspectR.
 
 ```powershell
 Get-Content -Raw data\tk_mundat_data_sharing_v2.json |
-  C:\Tools\OPA\opa.exe eval --format=json `
+  opa eval --format=json `
     --data policies\tk `
     --stdin-input data.inspectr.results
 ```
 
 Run commands from the repository root because policy and asset paths
 are relative.
+
+### Tests
+
+```powershell
+opa test policies\tk -v      # one test per decision-table row
+pytest tests -v              # evaluator, ERROR isolation, catalogue consistency
+```
 
 ## Repository structure
 
@@ -468,10 +453,15 @@ app.py                 Streamlit configuration and navigation
 pages/                 Application and research-documentation pages
   evaluation.py        Upload, evaluator invocation, and findings
 src/
-  evaluator.py         Input checks, OPA execution, and response processing
+  evaluator.py         Input checks, per-rule OPA execution, ERROR handling
+  catalog.py           Rule and status descriptions shown by the app pages
 policies/tk/
-  policy.rego          Aggregation of six policy reports
-  TK-*.rego            Inspection rules and report construction
+  policy.rego          Rule manifest and combined results
+  lib.rego             Shared helpers (true / false / undetermined facts)
+  TK-R*.rego           Rules as decision tables
+  tests/               Rego unit tests, one per decision-table row
+tests/                 Evaluator and consistency tests (pytest)
+docs/                  Change records
 data/                  Example blueprints and supporting data
 tk-uc/                 MUNDAT source material
 images/                Application images and logos
@@ -493,7 +483,10 @@ Definitions below describe usage within this project.
 | Intermediate representation | Planned common model separating input formats from inspection logic. |
 | Dataset | A collection of data, such as Sickleave. |
 | Data source | A system or dataset acting as input to an operation. |
-| Control | A safeguard intended to address a risk or requirement. |
+| Trigger | The fact that makes a rule's obligation apply. |
+| Obligation | What the requirement demands once triggered. |
+| Control | A safeguard in the design intended to meet an obligation. |
+| Undetermined | A fact the blueprint provides no usable evidence for (absent, null, or not a boolean). |
 | Checkpoint / gate | A planned assessment or approval point; declaration does not establish enforcement. |
 | Evidence | Input observations or derived facts supporting an assessment. |
 | Metadata catalogue | Reference structure for descriptive and governance records. |

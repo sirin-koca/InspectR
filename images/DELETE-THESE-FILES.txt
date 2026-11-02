@@ -1,0 +1,16 @@
+pages/about.py
+pages/architecture.py
+pages/datapipeline.py
+pages/evaluation.py
+pages/evidence.py
+pages/main.py
+pages/pac.py
+pages/research.py
+pages/taxonomy.py
+pages/tk_uc.py
+policies/tk/TK-001.rego
+policies/tk/TK-002.rego
+policies/tk/TK-003.rego
+policies/tk/TK-004.rego
+policies/tk/TK-005.rego
+policies/tk/TK-006.rego

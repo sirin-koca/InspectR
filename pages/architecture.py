@@ -27,9 +27,10 @@ with col1:
     - **Design-time inspection**: The blueprint describes planned controls and checkpoints before deployment; it is not runtime evidence.
     - **Shift-Left Compliance**: Catching non-compliance at design-time (CI/CD / pull request phase) prevents 
     costly runtime compliance failures and data contamination. 
-    - **Tri-State Output (PASS / FAIL / HUMAN)**: Standard linters offer binary true/false decisions.
-    Real-world compliance requires handling ambiguity by routing complex legal edge cases to human compliance 
-    officers (HUMAN). 
+    - **Status model (PASS / FAIL / UNKNOWN / HUMAN / NOT_APPLICABLE, plus ERROR)**: Standard linters offer
+    binary true/false decisions. Real-world compliance must also separate undetermined evidence (UNKNOWN),
+    legal judgement (HUMAN), and rules that do not apply (NOT_APPLICABLE). ERROR marks a fault in InspectR,
+    not a finding about the blueprint. 
     """
 )
 
@@ -48,7 +49,8 @@ with col2:
             ↓
             Evaluation: InspectR Engine
             ↓
-            PASS/FAIL/HUMAN
+            PASS / FAIL / UNKNOWN / HUMAN / NOT_APPLICABLE
+            (ERROR = InspectR fault)
             """,
             language="text",                    
 )  

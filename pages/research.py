@@ -220,8 +220,10 @@ with tab6:
             - **Architectural separation:** Policy is separated from application logic.
             - **Independent evaluation:** OPA evaluates Rego rules against blueprint evidence.
             - **Traceability:** Each rule exposes its interpretation, evidence, result, and remedy.
-            - **Evidence sufficiency:** `PASS`, `FAIL`, and `HUMAN` distinguish a
-            defined design control, a missing design control, and insufficient evidence.
+            - **Evidence sufficiency:** `PASS`, `FAIL`, `UNKNOWN`, `HUMAN`, and
+            `NOT_APPLICABLE` distinguish a declared control, a control declared absent,
+            undetermined evidence, a required legal judgement, and a rule that does not apply.
+            `ERROR` marks a fault in InspectR itself.
             - **Reproducibility:** The same blueprint produces repeatable rule results.
             - **Limit visibility:** Missing evidence, alternative interpretations, and
             rule limitations are documented.

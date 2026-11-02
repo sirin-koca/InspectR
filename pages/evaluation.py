@@ -4,22 +4,24 @@ import json
 import pandas as pd
 import streamlit as st
 
+from src.catalog import STATUS_ICON, STATUSES
 from src.evaluator import evaluate
 
 
 def status_counts(results: list[dict]) -> str:
-    counts = {status: 0 for status in ("PASS", "FAIL", "HUMAN")}
+    counts = {status: 0 for status in STATUSES}
     for result in results:
         counts[result["status"]] += 1
     return " · ".join(f"{status}: {counts[status]}" for status in counts)
 
 
 def status_message(status: str) -> str:
-    return {
-        "PASS": "🟢 PASS",
-        "FAIL": "🔴 FAIL",
-        "HUMAN": "🟠 HUMAN",
-    }.get(status, f"⚪ {status}")
+    return f"{STATUS_ICON.get(status, '⚪')} {status}"
+
+
+def as_text(value) -> str:
+    """Evidence values mix booleans, strings and lists; show them as JSON text."""
+    return value if isinstance(value, str) else json.dumps(value)
 
 
 def render_evidence(evidence: dict) -> None:
@@ -35,8 +37,8 @@ def render_evidence(evidence: dict) -> None:
                             "Node": f"{item.get('node_label', '')} "
                             f"(id={item.get('node_id', '')})",
                             "Blueprint selector": field.get("selector"),
-                            "Observed": field.get("observed"),
-                            "Expected": field.get("expected"),
+                            "Observed": as_text(field.get("observed")),
+                            "Expected": as_text(field.get("expected")),
                             "Condition": field.get("condition"),
                         }
                     )
@@ -45,8 +47,8 @@ def render_evidence(evidence: dict) -> None:
                     {
                         "Node": "",
                         "Blueprint selector": item.get("selector"),
-                        "Observed": item.get("observed"),
-                        "Expected": item.get("expected"),
+                        "Observed": as_text(item.get("observed")),
+                        "Expected": as_text(item.get("expected")),
                         "Condition": item.get("condition"),
                     }
                 )
@@ -73,28 +75,20 @@ def render_evidence(evidence: dict) -> None:
 
 
 def render_results(results: list[dict]) -> None:
-    counts = {status: 0 for status in ("PASS", "FAIL", "HUMAN")}
+    counts = {status: 0 for status in STATUSES}
     for result in results:
         counts[result["status"]] += 1
 
-    summary_columns = st.columns(3)
-    for column, status in (
-        (summary_columns[0], "PASS"),
-        (summary_columns[1], "FAIL"),
-        (summary_columns[2], "HUMAN"),
-    ):
+    summary_columns = st.columns(len(STATUSES))
+    for column, status in zip(summary_columns, STATUSES):
         with column:
-            st.metric(status, counts[status])
+            st.metric(status.replace("_", " "), counts[status])
 
-    st.caption(
-        " · ".join(
-            f"{status}: {counts[status]}"
-            for status in ("PASS", "FAIL", "HUMAN")
-        )
-    )
+    st.caption(status_counts(results))
     for result in results:
+        title = f" {result['title']}" if result.get("title") else ""
         with st.expander(
-            f"{status_message(result['status'])} — {result['rule']}"
+            f"{status_message(result['status'])} — {result['rule']}{title}"
         ):
             st.caption(result["legal_reference"])
             st.markdown(result["reason"])
@@ -133,7 +127,7 @@ st.caption(
 with st.container(border=True):
     st.markdown("#### Inspect a pipeline blueprint")
     st.caption(
-        "Upload a JSON blueprint containing data, workflow and infrastructure metadata, then run the six TK/MUNDAT design-time rules."
+        "Upload a JSON blueprint containing data, workflow and infrastructure metadata, then run the three TK/MUNDAT design-time rules."
     )
     uploaded_file = st.file_uploader(
         "JSON blueprint",

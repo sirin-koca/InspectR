@@ -255,7 +255,7 @@ digraph Blueprint {
     ];
 
     results [
-        label="Results + Evidence\\nPASS / FAIL / HUMAN",
+        label="Results + Evidence\\nPASS / FAIL / UNKNOWN / HUMAN\\nNOT_APPLICABLE / ERROR",
         fillcolor="#EAF0F8"
     ];
 
@@ -344,12 +344,12 @@ with st.container(border=True):
         for item in failures:
             st.write(f"• {item}")
     elif missing:
-        st.warning("HUMAN — Evidence is incomplete.")
+        st.warning("UNKNOWN — Evidence is undetermined.")
     else:
         st.success("PASS — Example checks satisfied.")
 
     if missing:
-        st.markdown("**Missing evidence**")
+        st.markdown("**Undetermined evidence**")
         for item in missing:
             st.write(f"• {item}")
 

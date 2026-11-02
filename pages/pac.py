@@ -1,76 +1,55 @@
 import pandas as pd
 import streamlit as st
 
+from src.catalog import DROPPED_RULES, RULE_SET_VERSION, RULES, STATUS_MODEL
+
 
 st.subheader("Policy-as-Code")
 st.caption("From TK/MUNDAT requirements to evidence-bound design-time OPA/Rego inspection")
 
 st.markdown(
-    """
+    f"""
     In this PoC, selected TK/MUNDAT requirements are operationalised as
-    six Rego rules. OPA evaluates those rules against declared design-time
-    evidence in a static pipeline blueprint. The Python application orchestrates
-    the inspection and presents the machine-readable findings.
+    {len(RULES)} Rego rules (rule set `{RULE_SET_VERSION}`). Each rule has the form
+    **IF trigger THEN control**. OPA evaluates the rules against declared
+    design-time evidence in a static pipeline blueprint. The Python application
+    orchestrates the inspection and presents the machine-readable findings.
     """
 )
 
 st.markdown("#### Active TK/MUNDAT rule mapping")
 
-rule_mapping = [
-    {
-        "Rule": "TK-001",
-        "Requirement": "DPIA for elevated-risk processing",
-        "Evidence": "data_source personal/special-category flags; dpia_checkpoint_defined",
-        "PASS": "No DPIA trigger, or a DPIA checkpoint is defined",
-        "FAIL": "DPIA is required but its checkpoint is not defined",
-    },
-    {
-        "Rule": "TK-002",
-        "Requirement": "Risk assessment for special-category data",
-        "Evidence": "special-category source; risk_assessment_checkpoint_defined",
-        "PASS": "No special-category source, or a risk checkpoint is defined",
-        "FAIL": "Special-category source lacks a defined risk checkpoint",
-    },
-    {
-        "Rule": "TK-003",
-        "Requirement": "Agreement before personal-data transfer",
-        "Evidence": "personal-data source; data_transfer; agreement flag",
-        "PASS": "Transfer is not triggered, or an agreement checkpoint is defined",
-        "FAIL": "Personal-data transfer lacks a defined agreement checkpoint",
-    },
-    {
-        "Rule": "TK-004",
-        "Requirement": "Lineage for integrated datasets",
-        "Evidence": "data_integration; lineage_record_defined",
-        "PASS": "No integration, or a lineage record is identified",
-        "FAIL": "Integration is declared without a lineage record",
-    },
-    {
-        "Rule": "TK-005",
-        "Requirement": "Purpose compatibility review",
-        "Evidence": "compliance_gate; purpose_compatibility_declared",
-        "PASS": "Compatibility is declared in the design",
-        "HUMAN": "Evidence is missing, false, or inconclusive",
-    },
-    {
-        "Rule": "TK-006",
-        "Requirement": "Complete sharing safeguards",
-        "Evidence": "DPIA, risk, agreement, recipient, and encryption controls",
-        "PASS": "All five planned safeguards are defined",
-        "FAIL": "One or more planned safeguards are missing or false",
-    },
-]
-
 st.dataframe(
-    pd.DataFrame(rule_mapping),
+    pd.DataFrame(
+        [
+            {
+                "Rule": rule["id"],
+                "Requirement": rule["title"],
+                "Legal basis": rule["legal_reference"],
+                "Trigger": rule["trigger"],
+                "Control": rule["control"],
+                "Evidence class": rule["evidence_class"],
+                "Possible statuses": ", ".join(rule["outcomes"]),
+            }
+            for rule in RULES
+        ]
+    ),
     use_container_width=True,
     hide_index=True,
 )
 
 st.caption(
     "These are TK/MUNDAT-specific design-time operationalisations. They are "
-    "not direct implementations of GDPR or EU AI Act text."
+    "not direct implementations of GDPR or EU AI Act text. Any rule can also "
+    "return ERROR if InspectR itself fails."
 )
+
+with st.expander("Rules dropped from the v1 rule set"):
+    st.dataframe(
+        pd.DataFrame(DROPPED_RULES, columns=["Rule", "Requirement", "Reason"]),
+        use_container_width=True,
+        hide_index=True,
+    )
 
 st.markdown("#### Evaluation flow")
 
@@ -92,20 +71,21 @@ for column, (step, description) in zip(
 
 st.markdown("#### Result semantics")
 
-result_columns = st.columns(3)
-for column, title, description in zip(
-    result_columns,
-    ("🟢 PASS", "🔴 FAIL", "🟠 HUMAN"),
-    (
-        "The blueprint defines the control required by the encoded design-time rule.",
-        "The blueprint explicitly lacks or disables a required design-time control.",
-        "The blueprint is missing enough information for automated inspection.",
+st.markdown(
+    "Each fact in the blueprint is **true**, **false** or **undetermined** "
+    "(absent, null, or not a boolean). An undetermined fact never produces PASS."
+)
+
+st.dataframe(
+    pd.DataFrame(
+        [
+            {"Status": f"{icon} {status}", "Meaning": meaning, "Who acts next": actor}
+            for status, icon, meaning, actor in STATUS_MODEL
+        ]
     ),
-):
-    with column:
-        with st.container(border=True):
-            st.markdown(f"**{title}**")
-            st.write(description)
+    use_container_width=True,
+    hide_index=True,
+)
 
 st.markdown("#### Automation boundary")
 st.warning(
