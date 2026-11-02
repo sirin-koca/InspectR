@@ -53,25 +53,19 @@ if "blueprint" not in st.session_state:
 if "blueprint_filename" not in st.session_state:
     st.session_state["blueprint_filename"] = None
 
-if "evaluation_results" not in st.session_state:
-    st.session_state["evaluation_results"] = None
 
 # --------------------------------------------------
 # NAVIGATION
 # --------------------------------------------------
 
 pages = [
-    st.Page("pages/research.py", title=":: Research"),
-    st.Page("pages/main.py", title=":: InspectR", default=True),
-    st.Page("pages/datapipeline.py", title=":: Datapipeline"),
-    st.Page("pages/pac.py", title=":: Engineering PaC"),
-    st.Page("pages/tk_uc.py", title=":: Use Case"),
-    st.Page("pages/taxonomy.py", title=":: Taxonomy"),
-    st.Page("pages/architecture.py", title=":: Architecture"),
-    st.Page("pages/evaluation.py", title=":: Evaluation"),
-    st.Page("pages/evidence.py", title=":: Evidence"),
-    st.Page("pages/about.py", title=":: About"),
+    st.Page("pages/overview.py", title="Overview", default=True),
+    st.Page("pages/method.py", title="Method"),
+    st.Page("pages/case.py", title="Case: TK / MUNDAT"),
+    st.Page("pages/inspection.py", title="Inspect"),
+    st.Page("pages/validation.py", title="Validation"),
 ]
+# Earlier exploratory pages are kept in pages/archive/ and are not shown.
 
 pg = st.navigation(pages)
 
@@ -83,29 +77,7 @@ st.sidebar.image(
     "images/uio.png",
     width=145,
 )
-# --------------------------------------------------
-# GLOBAL FOOTER
-# --------------------------------------------------
-
-st.markdown(
-    """
-    <style>
-    .inspectr-footer {
-        position: fixed;
-        bottom: 20px;
-        left: 270px;
-        color: magenta;
-        font-size: 0.85rem;
-        z-index: 999;
-    }
-    </style>
-
-    <div class="inspectr-footer">
-        InspectR PoC 
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.sidebar.caption("InspectR · iteration 1 · rule set tk-v2.0")
 
 # --------------------------------------------------
 # RUN SELECTED PAGE

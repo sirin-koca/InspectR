@@ -109,87 +109,336 @@ index fda1c2d..37efd60 100644
  
  
 diff --git a/README.md b/README.md
-index 82e6e22..2f3ca84 100644
+index 82e6e22..6b985ab 100644
 --- a/README.md
 +++ b/README.md
-@@ -59,7 +59,7 @@ The current application supports:
+@@ -1,515 +1,198 @@
+ # InspectR
  
- - Uploading a JSON pipeline blueprint and preview.
- - JSON parsing and basic input-structure validation.
+-## Compliance-by-design for data pipelines using Policy-as-Code
++Design-time compliance inspection of data-pipeline blueprints with Policy-as-Code (OPA/Rego).
+ 
+-InspectR is a research prototype for design-time inspection of data-pipeline blueprints. It uses Open Policy Agent (OPA) and Rego to evaluate selected
+-metadata conditions and present findings with reasons, supporting evidence, and remediation guidance.
++MSc thesis artefact (Design Science Research), Department of Informatics, University of Oslo, in collaboration with SINTEF within DataPACT. Case: MUNDAT, Trondheim Kommune (TK). Status: iteration 1 proof of concept, rule set `tk-v2.0`.
+ 
+-A pipeline structure (blueprint) describes how data moves through operations, with dependencies, conditions, and configuration. My research question is: _What information must a pipeline design expose to make a selected requirement machine-checkable?_
++> **Assurance boundary.** InspectR checks what a blueprint *declares* against encoded interpretations of selected requirements. It does not establish legal compliance, completed assessments or approvals, or the runtime behaviour of controls. The rules are author interpretations and have not yet been reviewed by SINTEF, TK or legal experts.
+ 
+-> **Status:** Early-stage proof of concept (PoC), October 2026. The current
+-> implementation establishes an initial baseline, not the final scope of
+-> InspectR. A broader, standalone architecture incorporating an intermediate
+-> representation (IR) is planned.
++## Problem
+ 
+-> Assurance boundary: InspectR checks supplied design information against
+-> encoded policy interpretations. It does not establish legal compliance,
+-> completed approvals, or the implementation and runtime effectiveness of
+-> controls.
++Compliance requirements for data pipelines (for example GDPR obligations in the TK documents) are written in natural language and are checked manually, late, and without traceability to the pipeline design. Pipeline tooling exports structure, but not the compliance facts a check needs. InspectR investigates how selected requirements can be made machine-checkable against a pipeline blueprint before deployment.
+ 
+-## Contents
++## Research questions
+ 
+-- [Research context](#research-context)
+-- [Current PoC](#current-poc)
+-- [Architecture](#architecture)
+-- [Pipeline blueprint](#pipeline-blueprint)
+-- [Metadata catalogue and evidence](#metadata-catalogue-and-evidence)
+-- [Policy checks](#policy-checks)
+-- [Interpreting findings](#interpreting-findings)
+-- [Planned architecture and research directions](#planned-architecture-and-research-directions)
+-- [Evaluation status](#evaluation-status)
+-- [Limitations](#limitations)
+-- [Running the prototype](#running-the-prototype)
+-- [Repository structure](#repository-structure)
+-- [Terminology](#terminology)
++**Main RQ.** How can a design-time policy engine be architected to inspect compliance properties of data/AI pipeline blueprints in a way that is traceable, reliable and independent of the use case and pipeline tool?
+ 
+-## Research context
+-
+-InspectR is being developed as an MSc thesis artefact in Systems Architecture
+-at the University of Oslo, in collaboration with SINTEF within DataPACT.
+-
+-The thesis follows Design Science Research (DSR). Its broader motivation is
+-compliance automation for data and AI systems, with an emphasis on
+-compliance-by-design: identifying relevant design issues before deployment.
+-
+-The research investigates how selected compliance expectations can be
+-translated into inspectable architectural information and executable
+-Policy-as-Code checks. Development and planned case evaluation are grounded
+-in MUNDAT, the Trondheim Kommune municipal data-sharing use case.
+-
+-The application, initial policy interpretations, and blueprint enrichment
+-were developed by the thesis author. The interpretations have not yet been
+-validated by SINTEF, Trondheim Kommune, or legal reviewers.
+-
+-Planned submission: May 2027. The final contribution and evaluation scope remain under development.
+-
+-## Current PoC
+-
+-The current application supports:
+-
+-- Uploading a JSON pipeline blueprint and preview.
+-- JSON parsing and basic input-structure validation.
 -- Evaluation of six initial Rego checks through OPA.
-+- Evaluation of three Rego rules (rule set `tk-v2.0`) through OPA.
- - Validation of returned result fields and status values.
- - Side-by-side presentation of the blueprint metadata and findings.
- - Display of policy-provided reasons, evidence, references, and remedies.
-@@ -95,15 +95,20 @@ The current PoC passes the blueprint directly to OPA without an IR.
- 
- ### Evaluator
+-- Validation of returned result fields and status values.
+-- Side-by-side presentation of the blueprint metadata and findings.
+-- Display of policy-provided reasons, evidence, references, and remedies.
+-
+-The PoC inspects declared node properties. It does not execute pipelines,
+-inspect actual datasets, enforce runtime decisions, or analyse graph paths.
+-
+-The current input format is JSON. Native inspection of other pipeline
+-formats or Infrastructure-as-Code (IaC) files is not implemented.
+-Infrastructure-related metadata is represented within the example blueprint.
+-
+-## Architecture
+-
+-### Current evaluation flow (without IR)
+-
+-```mermaid
+-flowchart LR
+-    A[JSON blueprint] --> B[InspectR input validation]
+-    B --> C[OPA / Rego evaluation]
+-    C --> D[InspectR result validation]
+-    D --> E[Streamlit findings]
+-```
+-
+-| Component | Responsibility |
++| RQ | Focus |
+ |---|---|
+-| Streamlit GUI | Upload, interaction, session state, and presentation. |
+-| InspectR Python evaluator | Structural checks, OPA invocation, response parsing,  result validation. |
+-| OPA | Execution of Rego policies against the supplied input. |
+-| Rego policies | Conditions, decision branches, and finding construction. |
+-
+-InspectR coordinates the inspection workflow; OPA performs policy evaluation.
+-The current PoC passes the blueprint directly to OPA without an IR.
+-
+-### Evaluator
++| RQ1 · Evidence model | What compliance-relevant information must a blueprint contain for policy-based inspection, and how much can pipeline tooling derive versus manual annotation? |
++| RQ2 · Architecture | Which architectural design supports reuse across use cases and blueprint formats (intermediate representation with adapters, policy packs, explicit result semantics)? |
++| RQ3 · Evaluation | How reliable, explainable and efficient are InspectR's findings compared with manual expert review, across DataPACT use cases? |
  
 -`src/evaluator.py` checks that the input contains a `pipeline` object and a
 -`pipeline.nodes` list. It then invokes the configured OPA executable with:
-+`src/evaluator.py` checks that the input is a JSON object with a `pipeline`
-+object, a `pipeline.nodes` list, and a string `id` on every node. An
-+unreadable blueprint raises an input error and no rule is evaluated.
-+
-+The evaluator then reads the rule manifest and queries each rule separately:
++## Method: from requirement to verdict
  
  ```text
- Policy directory: policies/tk
+-Policy directory: policies/tk
 -Query:            data.inspectr.results
-+Manifest:         data.inspectr.manifest
-+Per rule:         data.inspectr.tk.r1.result, ...r2.result, ...r3.result
- ```
- 
+-```
+-
 -`policy.rego` aggregates the reports from TK-001–TK-006.
-+`policy.rego` also exposes `data.inspectr.results` (all three results) for
-+direct use with `opa eval`.
- 
- The evaluator requires each returned result to contain:
- 
-@@ -117,8 +122,9 @@ remedy
- ```
- 
- It validates field presence and permitted status values, not legal accuracy,
+-
+-The evaluator requires each returned result to contain:
+-
+-```text
+-rule
+-status
+-legal_reference
+-reason
+-evidence
+-remedy
+-```
+-
+-It validates field presence and permitted status values, not legal accuracy,
 -evidence correctness, or policy completeness. Execution and response errors
 -raise exceptions.
-+evidence correctness, or policy completeness. If a single rule fails (OPA
-+error, undefined or conflicting result, malformed result), that rule returns
-+`ERROR` and the other results are kept.
+-
+-
+-## Pipeline blueprint
+-
+-A blueprint is a machine-readable description of a planned pipeline.
+-
+-### What can a data-pipeline blueprint describe?
+-
+-A pipeline blueprint can represent planned activities, data relationships,
+-configuration, and governance declarations. The information available depends
+-on the modelling language, designer, and metadata supplied.
+-
+-The categories below are an organisational overview, not a universal standard
+-or a list of capabilities currently implemented in InspectR.
+-
+-| Category | Element | What it describes | Example |
+-|---|---|---|---|
+-| Representation structure | Node | A represented activity, system, dataset, control, or destination. | Extraction activity |
+-| Representation structure | Identifier | An identifier for referencing an element within a defined scope. | `extract_data` |
+-| Representation structure | Type | The declared category of an element. | `data_source`, `data_transfer` |
+-| Representation structure | Property | A declared attribute, configuration value, or reference. | `contains_personal_data: true` |
+-| Representation structure | Connection / edge | A typed relationship between elements, with explicitly defined meaning. | Data flow or execution dependency |
+-| Data description | Sources and outputs | Systems or datasets consumed or produced by an operation. | HR dataset → aggregated research dataset |
+-| Data description | Schema | Field names, types, and structural constraints. | `employee_id: string` |
+-| Data description | Classification | Declared sensitivity or governance classifications of datasets or fields. | Personal data; special-category data |
+-| Processing and flow | Processing activity | A planned operation and, where specified, its inputs and outputs. | Extraction, filtering, or cleaning |
+-| Processing and flow | Integration | A planned combination or harmonisation of data. | Joining datasets |
+-| Processing and flow | Dependencies and conditions | Declared ordering, branching, and conditions for proceeding. | Release depends on approval |
+-| Processing and flow | Transfer and destination | A planned delivery or publication and its intended endpoint. | Publish an output to an open-data portal |
+-| Infrastructure and configuration | Deployment and storage | Declared hosting, storage, and deployment characteristics. | Storage service and deployment region |
+-| Infrastructure and configuration | Security settings | Planned technical protection settings. | Encryption at rest and in transit |
+-| Infrastructure and configuration | Retention settings | Declared retention periods and deletion configuration. | Retain for 30 days; purge configured |
+-| Governance and safeguards | Purpose and usage restrictions | Intended processing purposes and declared limits on use. | Research purpose; no onward sharing |
+-| Governance and safeguards | Roles and access | Declared responsibilities, permissions, and recipient conditions. | Dataset owner; authorised recipient role |
+-| Governance and safeguards | Privacy measures | Planned operations intended to protect data. | Aggregation, masking, or anonymisation |
+-| Governance and safeguards | Assessment and approval checkpoints | Planned review or authorisation points and their dependencies. | Risk review before release |
+-| Traceability and supporting references | Planned lineage | Declared relationships between sources, transformations, and outputs. | Output derived from two specified sources |
+-| Traceability and supporting references | Supporting-artifact references | Identifiers or versions of relevant catalogue records, specifications, policies, or review records. | Lineage-record ID; policy version |
+-
+-
+-### Example and provenance
+-
+-```text
+-data/tk_mundat_data_sharing_v2.json
+-```
+-
+-The initial blueprint was created using inLUMEN. V2 was manually enriched
+-by the thesis author because the initial export lacked metadata required
+-by the proposed checks.
+-
+-The intended longer-term workflow is for pipeline representations to
+-originate from designers or other supported tools. Manual enrichment is
+-part of the current experiment, not an established production integration.
+-
+-### MUNDAT scenario
+-
+-DataPACT Deliverable D5.1, Section 3.7, identifies:
+-
+-| Dataset | Description |
+-|---|---|
+-| Sickleave | Research dataset combining sick-leave registration, work-environment surveys, turnover reports, and HR demographic data. |
+-| IoT | Stormwater-basin sensor data measuring sand levels. |
+-
+-V2 models a Sickleave-related scenario and explicitly excludes IoT.
+-
+-Source identifiers such as `health_services` and `citizen_registry`,
+-together with their schemas and configuration values, are illustrative
+-modelling assumptions. They are not confirmed municipal system details
+-or a validated reproduction of the documented contributing sources.
+-
+-### Structure and metadata
+-
+-The example contains nodes and typed connections.
+-
+-| Element | Meaning |
+-|---|---|
+-| Node | A source, activity, checkpoint, control, or destination. |
+-| Node ID | Identifier used to reference a particular node. |
+-| Node type | Category used by policies to select relevant nodes. |
+-| Properties | Metadata and design declarations inspected by policies. |
+-| Connection | A declared data, control, authorisation, approval, or metadata relationship. |
+-
+-The blueprint combines:
+-
+-- **Schema metadata**: fields, types, PII markers, and masking strategies.
+-- **Pipeline metadata**: processing steps, purposes, and checkpoints.
+-- **Infrastructure metadata**: storage, encryption, retention, and purge settings.
+-- **References**: catalogue, dataset, lineage, and provenance identifiers.
+-
+-These categories are represented in one JSON document. They are not
+-automatically extracted from separate schema, manifest, and IaC files.
+-
+-Not all properties are evaluated by the current policies.
+-
+-### Design declarations
+-
+-```json
+-{
+-  "id": "dpia_check",
+-  "type": "compliance_gate",
+-  "properties": {
+-    "dpia_checkpoint_defined": true,
+-    "risk_assessment_checkpoint_defined": true
+-  }
+-}
++Requirement (TK / GDPR, natural language)
++  → Rule        IF trigger THEN control
++  → Facts       blueprint fields the rule reads: true | false | undetermined
++  → Evaluation  OPA applies the rule's decision table to the facts
++  → Result      one status + reason + evidence + remedy
+ ```
  
+-Here, `true` declares that a checkpoint is included in the design. It does
+-not establish that an assessment has been performed or approved.
++A fact is **undetermined** when the blueprint gives no usable evidence for it (absent, null, or not a boolean). Every rule follows the same decision table:
  
- ## Pipeline blueprint
-@@ -258,33 +264,25 @@ processing activities, lineage, and provenance.
+-For the relevant Boolean properties, `false` declares absence; missing or
+-`null` values provide no affirmative declaration. Actual outcome handling
+-depends on the rule.
++| Trigger | Control | Status |
++|---|---|---|
++| undetermined | any | UNKNOWN |
++| false | any | NOT_APPLICABLE |
++| true | false | FAIL |
++| true | undetermined | UNKNOWN |
++| true | true | PASS (HUMAN for judgement rules) |
  
- The evidence explains the encoded decision. 
- Selectors are descriptive strings, not guaranteed executable JSONPath
+-## Metadata catalogue and evidence
++ERROR is outside the table: InspectR failed, not the blueprint. An undetermined fact never produces PASS.
+ 
+-### Catalogue representation
++### Status model
+ 
+-The example includes a `metadata_catalog` node describing an intended
+-reference point for dataset identity, ownership, schemas, sensitivity,
+-processing activities, lineage, and provenance.
++| Status | Meaning | Who acts next |
++|---|---|---|
++| PASS | The obligation applies and every required control is declared `true`. | Nobody (design level only) |
++| FAIL | The obligation applies and a required control is declared `false`. | Designer: add the control |
++| UNKNOWN | A fact the rule needs is undetermined. | Designer or tool: supply the fact |
++| HUMAN | Everything checkable is declared; the final decision is a legal judgement. | Legal or domain expert |
++| NOT_APPLICABLE | The trigger facts are declared `false`; the obligation does not apply. | Nobody |
++| ERROR | The rule could not be evaluated. Not a finding about the blueprint. | InspectR developer |
+ 
+-| Example reference | Intended role |
+-|---|---|
+-| `catalog:trondheim-mundat` | Modelled catalogue identity. |
+-| `dataset:health-services` | Record for an illustrative source. |
+-| `dataset:citizen-registry` | Record for an illustrative source. |
+-| `lineage:tk-mundat-sickleave-v2` | Intended lineage-record reference. |
+-| `provenance:tk-mundat-sickleave-v2` | Intended provenance-record reference. |
++PASS is not a compliance certificate: it means the design declares the control.
+ 
+-### Finding evidence
++## Rule set tk-v2.0
+ 
+-| Field | Contents |
+-|---|---|
+-| `input_evidence` | Selected observations, descriptive selectors, expected values, and conditions. |
+-| `derived_evidence` | Facts or labels calculated or assigned by the policy. |
++| Rule | TK requirement | Trigger | Control | Legal reference |
++|---|---|---|---|---|
++| TK-R1 · DPIA and risk-assessment checkpoint | DPIA / risk assessment | A `data_source` declares `contains_special_category_data: true`. | One `compliance_gate` declares `dpia_checkpoint_defined` and `risk_assessment_checkpoint_defined` as `true`. | GDPR Art. 35(1), 35(3)(b), Art. 9 |
++| TK-R2 · Lineage record for integrated data | Traceability | A `data_integration` node exists. | Every integration node declares `lineage_record_defined: true`. | GDPR Art. 5(2), Art. 30 |
++| TK-R3 · Purpose compatibility before sharing | Lawfulness | A `data_transfer` node exists and a source declares `contains_personal_data: true`. | Gates carrying `purpose_compatibility_declared` declare `true`. Best outcome is HUMAN, never PASS. | GDPR Art. 5(1)(b), Art. 6(4) |
+ 
+-The evidence explains the encoded decision. 
+-Selectors are descriptive strings, not guaranteed executable JSONPath
 -expressions. Some policies accept legacy properties as fallbacks, so the
 -observed value may originate from a legacy field rather than the preferred
 -field named in the explanation.
-+expressions. The observed value `"<absent>"` means the field is not in the
-+blueprint. No legacy fallback fields are accepted.
++TK-R1 merges v1 rules TK-001 and TK-002; TK-R2 replaces TK-004; TK-R3 replaces TK-005. TK-003 and TK-006 were dropped. Each rule's decision table is in the header of its Rego file. Reasons and fixes: [`docs/RULESET-V2-CHANGES.md`](docs/RULESET-V2-CHANGES.md).
  
- ## Policy checks
+-## Policy checks
++## Case: TK / MUNDAT
  
- The current rules are preliminary author-developed interpretations.
- Their legal references are not validated mappings to legal obligations.
+-The current rules are preliminary author-developed interpretations.
+-Their legal references are not validated mappings to legal obligations.
++The **Sickleave** scenario (DataPACT D5.1 §3.7) assembles a research dataset from health-services and citizen-registry sources, integrates and anonymises it, and shares it with an external recipient. It involves special-category health data, integration of sources, and sharing for a new purpose.
  
 -| Rule | Trigger or target | Inspection |
--|---|---|---|
++| Blueprint | Content | Role |
+ |---|---|---|
 -| TK-001 | A source declares personal and special-category data. | DPIA checkpoint declaration. |
 -| TK-002 | A source declares special-category data. | Risk-assessment checkpoint declaration. |
 -| TK-003 | Personal data and a transfer node are present. | Data-sharing agreement checkpoint declaration. |
 -| TK-004 | Integration nodes. | Lineage-record declaration. |
 -| TK-005 | Compliance gates. | Purpose-compatibility declaration. |
 -| TK-006 | Three named nodes. | Five specified checkpoint and encryption declarations. |
-+Rule set `tk-v2.0`. Each rule has the form IF trigger THEN control.
- 
+-
 -TK-006 checks:
-+| Rule | Replaces | Trigger | Control | Statuses |
-+|---|---|---|---|---|
-+| TK-R1 | TK-001, TK-002 | A source declares special-category data. | One compliance gate declares DPIA and risk-assessment checkpoints. | PASS, FAIL, UNKNOWN, NOT_APPLICABLE |
-+| TK-R2 | TK-004 | An integration node exists. | Every integration node declares a lineage record. | PASS, FAIL, UNKNOWN, NOT_APPLICABLE |
-+| TK-R3 | TK-005 | A transfer node exists and a source declares personal data. | Gates carrying the field declare purpose compatibility. | HUMAN, FAIL, UNKNOWN, NOT_APPLICABLE |
- 
+-
 -```text
 -dpia_check.properties.dpia_checkpoint_defined
 -dpia_check.properties.risk_assessment_checkpoint_defined
@@ -197,50 +446,60 @@ index 82e6e22..2f3ca84 100644
 -sharing_assessment.properties.recipient_approval_checkpoint_defined
 -share_dataset.properties.encryption_in_transit_configured
 -```
-+TK-003 and TK-006 were dropped. The reasons and the full list of fixes are in
-+`docs/RULESET-V2-CHANGES.md`. The decision table of each rule is in the header
-+comment of its Rego file.
++| `tk-uc/inlumen-tk-uc.json` | Raw inLUMEN export: 7 nodes, generic `kind` (source, task, destination), empty `parameters`. | Shows what tooling exports today. |
++| `data/tk_mundat_data_sharing_v2.json` | Enriched blueprint: 11 typed nodes, 13 connections, compliance facts added manually. | Evaluation input. |
  
- **FYI**: These are thesis authors' policy interpretations derived from TK documents. They are preliminary design-time checks inspired by selected MUNDAT requirements. 
+-**FYI**: These are thesis authors' policy interpretations derived from TK documents. They are preliminary design-time checks inspired by selected MUNDAT requirements. 
++The difference between the two is a research finding (RQ1): it measures the gap between what pipeline tooling exports and what inspection needs. Source names, schemas and configuration values in V2 are illustrative modelling assumptions, not confirmed municipal system details.
  
-@@ -305,46 +303,36 @@ Tasks: Create one record for each policy rule. Distinguish source requirements,
- | Unverified assumptions | Interpretations or design decisions requiring confirmation. |
- | Reviewer / status | Reviewer, scope of review, date, outcome, and unresolved issues. Use “Not reviewed” where applicable. |
+-## Policy traceability record
+-For each rule, it is necessary to document: TK source → compliance expectation → organisational / implementation interpretation → encoded check → unverified assumptions → reviewer/status
++## Architecture
  
+-Tasks: Create one record for each policy rule. Distinguish source requirements, proposed interpretations, and implemented behaviour.
++```mermaid
++flowchart LR
++    A[JSON blueprint] --> B[Evaluator: input validation]
++    B --> C[OPA: one query per rule]
++    C --> D[Evaluator: result validation]
++    D --> E[Streamlit: findings with evidence]
++```
+ 
+-| Field | What to document |
+-|---|---|
+-| Rule ID and title | Unique identifier and short description. |
+-| TK source | Exact section, requirement/user-story ID, page, and relevant wording. |
+-| Compliance expectation | What the source asks for, without adding assumptions. |
+-| Proposed organisational interpretation | Meaning in the MUNDAT workflow; identify author-proposed interpretations explicitly. |
+-| Implementation interpretation | Required metadata, applicability conditions, and intended outcomes. |
+-| Encoded check | Rego file/rule, inspected fields, conditions, fallback fields, and actual decision branches. |
+-| Evidence and limitations | Where observations come from and what they do—and do not—establish. |
+-| Unverified assumptions | Interpretations or design decisions requiring confirmation. |
+-| Reviewer / status | Reviewer, scope of review, date, outcome, and unresolved issues. Use “Not reviewed” where applicable. |
+-
 -### Example: TK-004 — Lineage declaration
-+### Example: TK-R2 — Lineage record for integrated data
- 
- | Field | Record |
- |---|---|
+-
+-| Field | Record |
+-|---|---|
 -| Rule ID and title | TK-004 — Lineage declaration. |
-+| Rule ID and title | TK-R2 — Lineage record for integrated data (replaces TK-004). |
- | TK source | D5.1 §3.7: TK.US.07, p. 59; TK.FR.05, p. 60. |
- | Compliance expectation | Support lineage and traceability of data and processing operations. |
- | Proposed organisational interpretation | Integration designs should identify a supporting lineage record. Author-proposed; not reviewed. |
- | Implementation interpretation | Represent the lineage-record declaration as a Boolean property on integration nodes. |
+-| TK source | D5.1 §3.7: TK.US.07, p. 59; TK.FR.05, p. 60. |
+-| Compliance expectation | Support lineage and traceability of data and processing operations. |
+-| Proposed organisational interpretation | Integration designs should identify a supporting lineage record. Author-proposed; not reviewed. |
+-| Implementation interpretation | Represent the lineage-record declaration as a Boolean property on integration nodes. |
 -| Encoded check | `TK-004.rego` selects nodes of type `data_integration` and reads `properties.lineage_record_defined`, falling back to `lineage_available` when the preferred field is absent. An explicitly false value triggers FAIL; otherwise a true value can trigger PASS. No integration nodes also produces PASS. Other combinations can leave the report undefined. |
-+| Encoded check | `TK-R2.rego` selects nodes of type `data_integration` and reads `properties.lineage_record_defined`. No integration node: NOT_APPLICABLE. Any node with `false`: FAIL. Any node with the field absent, null, or not a boolean: UNKNOWN. All nodes `true`: PASS. No fallback fields. |
- | Evidence and limitations | The supplied declaration supports the finding. The referenced lineage record is not retrieved or validated. |
- | Unverified assumptions | A Boolean declaration is useful for design review; integration nodes provide an appropriate inspection scope. |
- | Reviewer / status | Not reviewed.
- 
- ## Interpreting findings
- 
-+Each fact a rule reads is true, false, or undetermined (absent, null, or not
-+a boolean).
-+
- | Status | Meaning |
+-| Evidence and limitations | The supplied declaration supports the finding. The referenced lineage record is not retrieved or validated. |
+-| Unverified assumptions | A Boolean declaration is useful for design review; integration nodes provide an appropriate inspection scope. |
+-| Reviewer / status | Not reviewed.
+-
+-## Interpreting findings
+-
+-| Status | Meaning |
++| Component | Responsibility |
  |---|---|
 -| `PASS` | An encoded condition is satisfied, or a rule-specific non-trigger branch applies. |
 -| `FAIL` | A condition treated as a violation by the encoded rule is detected. |
 -| `HUMAN` | Contextual review is requested; currently used only by TK-005. |
-+| `PASS` | The obligation applies and every required control is declared `true`. |
-+| `FAIL` | The obligation applies and a required control is declared `false`. |
-+| `UNKNOWN` | A fact the rule needs is undetermined. |
-+| `HUMAN` | Everything checkable is declared; the final decision is a legal judgement (TK-R3 only). |
-+| `NOT_APPLICABLE` | The trigger facts are declared `false`; the obligation does not apply. |
-+| `ERROR` | InspectR could not evaluate the rule. Not a finding about the blueprint. |
- 
+-
 -A `PASS` is not a compliance certificate. A non-trigger result is not
 -affirmative evidence that a control exists.
 -
@@ -259,15 +518,105 @@ index 82e6e22..2f3ca84 100644
 -nodes can also produce conflicting report values. Such conditions may
 -prevent evaluation from returning the expected result array; they are not
 -automatically converted into `HUMAN`.
-+A `PASS` is not a compliance certificate; it means the design declares the
-+control. An undetermined fact never produces `PASS`.
+-
+-`HUMAN` does not represent a completed review or an implemented approval
+-workflow. Remedies are policy-authored guidance, not verified legal advice.
++| `policies/tk/*.rego` | Rules as decision tables; manifest in `policy.rego`; shared fact helpers in `lib.rego`. |
++| `src/evaluator.py` | Validates input, queries each rule separately, validates results, isolates failures as ERROR. |
++| `src/catalog.py` | Single source of truth for rules, statuses and descriptions shown in the app. |
++| `src/scenarios.py` | Controlled scenarios S0–S6 with expected statuses. |
++| `app.py`, `pages/` | Streamlit app: Overview, Method, Case, Inspect, Validation. |
  
- `HUMAN` does not represent a completed review or an implemented approval
- workflow. Remedies are policy-authored guidance, not verified legal advice.
-@@ -407,13 +395,9 @@ The current PoC:
- - Does not inspect graph paths or enforce checkpoint ordering.
- - Does not resolve catalogue or supporting-artifact references.
- - Does not verify assessments, agreements, anonymisation, or runtime controls.
+-## Planned architecture and research directions
++Every result carries `rule`, `status`, `legal_reference`, `reason`, `evidence`, `remedy`. A failing rule returns ERROR while the other results are kept. Planned (RQ2): an intermediate representation with adapters, so native tool exports can be inspected without manual enrichment.
+ 
+-### Planned IR-based architecture
++## Validation
+ 
+-The intended final implementation is broader than the current PoC.
+-It is planned to introduce an intermediate representation to separate
+-input-specific formats from inspection logic.
++**Scenario matrix.** Each scenario changes one fact in V2; the expected status follows from the decision table. All 21 results match.
+ 
+-![InspectR architecture](./images/arch-inspectr.jpeg)
+-
+-The objective is a standalone tool with a common inspection model rather
+-than an application tied to one designer export.
+-
+-An IR alone does not guarantee interoperability. Supported adapters,
+-metadata mappings, semantics, and policy portability must be implemented
+-and evaluated. The exact supported formats remain to be defined.
+-
+-### Candidate research directions
+-
+-| Direction | Possible contribution |
+-|---|---|
+-| Requirement operationalisation | Traceable translation from selected requirements to metadata and executable constraints. |
+-| IR and interoperability | A defined representation and mappings supporting consistent inspection across supported inputs. |
+-| Architectural control coverage | Inspection of control placement, relevant paths, and bypasses. |
+-| Incomplete information | Explicit handling of applicability, missing evidence, and indeterminate assessments. |
+-| Evidence and explanations | Findings linked to observed facts, supporting references, and clearly bounded conclusions. |
+-
+-These are research candidates, not implemented capabilities or established
+-novel contributions. Their novelty and value require comparison with
+-related research and empirical evaluation.
++| Scenario | TK-R1 | TK-R2 | TK-R3 |
++|---|---|---|---|
++| S0 · Enriched blueprint (V2) | PASS | PASS | HUMAN |
++| S1 · DPIA checkpoint declared false | FAIL | PASS | HUMAN |
++| S2 · DPIA checkpoint field removed | UNKNOWN | PASS | HUMAN |
++| S3 · Special-category flag removed | UNKNOWN | PASS | HUMAN |
++| S4 · No special-category data | NOT_APPLICABLE | PASS | HUMAN |
++| S5 · Purpose compatibility declared false | PASS | PASS | FAIL |
++| S6 · Raw inLUMEN export (not enriched) | UNKNOWN | NOT_APPLICABLE | NOT_APPLICABLE |
+ 
+-## Evaluation status
++**Tests.** 29 Rego unit tests (`opa test`) cover every decision-table row. 20 pytest integration tests run real OPA on blueprints. They cover the baseline, regression tests for the v1 defects, malformed input, ERROR isolation, catalogue/Rego consistency, and scenarios S0–S6.
+ 
+-The example blueprint currently supports initial functional testing.
+-A systematic test corpus and completed case evaluation are not yet
+-documented.
++**Defects found in v1 and fixed.**
+ 
+-Planned work includes:
++| ID | Defect | Fix |
++|---|---|---|
++| D1 | One missing field made the whole result list undefined. | UNKNOWN row in every rule; one query per rule; ERROR isolated. |
++| D2 | A missing trigger produced a false PASS. | Undetermined trigger gives UNKNOWN. |
++| D3 | TK-005 returned HUMAN for the wrong reason. | TK-R3 reads only gates that carry the field. |
++| D4 | Vacuous PASS with evidence not in the blueprint. | NOT_APPLICABLE or UNKNOWN; evidence lists only what was examined. |
++| D5 | OPA called at a fixed Windows path. | `OPA_PATH`, then `PATH`, then the old path. |
+ 
+-- Reviewing case-model fidelity and policy interpretations.
+-- Documenting requirement-to-policy traceability.
+-- Establishing independently reviewed expected outcomes.
+-- Testing valid, invalid, incomplete, and conflicting inputs.
+-- Evaluating the selected approach against a defined baseline.
+-- Assessing finding interpretation and practical review effort.
+-- Evaluating IR mappings and consistency across supported inputs.
++**PoC acceptance criteria.**
+ 
+-The scope will be refined with the supervisors and relevant case stakeholders.
++| ID | Criterion | Status |
++|---|---|---|
++| AC1 | Native inLUMEN export accepted through an adapter. | Open |
++| AC2 | Policy packs for three use cases without engine changes. | Open |
++| AC3 | Every finding has rule ID, status, reference, evidence, reason, remedy. | Met |
++| AC4 | Uniform result semantics; missing information gives UNKNOWN, never PASS. | Met |
++| AC5 | `opa test` cases for pass, fail, missing and not-applicable per rule. | Met |
++| AC6 | Reproducible through Docker and CLI, deterministic output. | Partial (no Docker image) |
++| AC7 | Domain expert review of a policy sample. | Open |
+ 
+ ## Limitations
+ 
+-The current PoC:
++The rules are unreviewed interpretations; legal references are not validated mappings. InspectR reads declared properties only. It does not follow graph paths or checkpoint ordering, resolve catalogue references, or verify assessments, agreements, anonymisation or runtime controls. The raw inLUMEN export uses `kind` instead of `type` and has no compliance facts, so it cannot pass any rule until an adapter exists. Only one use case (TK) is encoded.
+ 
+-- Depends on supplied metadata and unvalidated policy interpretations.
+-- Performs basic structural validation, not complete semantic validation.
+-- Does not inspect graph paths or enforce checkpoint ordering.
+-- Does not resolve catalogue or supporting-artifact references.
+-- Does not verify assessments, agreements, anonymisation, or runtime controls.
 -- Handles missing information differently across rules.
 -- Can produce undefined or conflicting policy reports for some inputs.
 -- Accepts legacy fields with different declaration/completion terminology.
@@ -275,16 +624,26 @@ index 82e6e22..2f3ca84 100644
 -  evidence warrants.
 -- Uses fixed node identifiers in TK-006.
 -- Uses a fixed Windows OPA executable path.
-+- Reads node `type`; a raw inLUMEN export uses `kind`, so TK-R2 and TK-R3
-+  return NOT_APPLICABLE on it until an adapter maps the export.
-+- Covers three TK requirements; TK-003 (data-sharing agreement) is not encoded.
- - Does not yet implement the planned IR or native multi-format support.
+-- Does not yet implement the planned IR or native multi-format support.
++## Open questions for SINTEF
  
- These limitations describe the baseline implementation; they are not
-@@ -427,14 +411,8 @@ claims that corrective work has already been completed.
- - OPA supporting `import rego.v1`.
- - Project pages and assets in their expected repository locations.
+-These limitations describe the baseline implementation; they are not
+-claims that corrective work has already been completed.
++1. Is three rules acceptable for iteration 1, or should TK-003 (data-sharing agreement) return as TK-R4?
++2. Should a design with special-category data and no compliance gate be FAIL (current) or UNKNOWN?
++3. Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?
++4. Who at SINTEF or TK can review the three rules for fidelity (AC7)?
++5. Is there any confidentiality restriction on deriving rules from TK documents in a public repository?
  
+-## Running the prototype
++## Running
+ 
+-### Prerequisites
+-
+-- Python and the dependencies in `requirements.txt`.
+-- OPA supporting `import rego.v1`.
+-- Project pages and assets in their expected repository locations.
+-
 -The current evaluator invokes:
 -
 -```text
@@ -293,65 +652,175 @@ index 82e6e22..2f3ca84 100644
 -
 -Install OPA there or update the executable path in `src/evaluator.py`.
 -Adding OPA to `PATH` alone does not change this configuration.
-+The evaluator looks for OPA in this order: the `OPA_PATH` environment
-+variable, `opa` on `PATH`, then `C:\Tools\OPA\opa.exe`.
- 
- ### Start the application
- 
-@@ -453,7 +431,7 @@ Run InspectR.
+-
+-### Start the application
+-
+-From the repository root, with a virtual environment available at `.venv`:
++Requirements: Python 3.12, the packages in `requirements.txt`, and OPA ≥ 1.0. The evaluator finds OPA via `OPA_PATH`, then `opa` on `PATH`, then `C:\Tools\OPA\opa.exe`.
  
  ```powershell
+ .\.venv\Scripts\Activate.ps1
+-pip install -r requirements.txt
++python -m pip install -r requirements.txt pytest
+ streamlit run app.py
+ ```
+ 
+-Open the Evaluation page, upload the example JSON blueprint, and select
+-Run InspectR.
+-
+-### Direct policy evaluation
+-
+ ```powershell
++C:\Tools\OPA\opa.exe test policies\tk -v          # 29 Rego tests
++python -m pytest tests -v                         # 20 integration tests
  Get-Content -Raw data\tk_mundat_data_sharing_v2.json |
 -  C:\Tools\OPA\opa.exe eval --format=json `
-+  opa eval --format=json `
-     --data policies\tk `
-     --stdin-input data.inspectr.results
+-    --data policies\tk `
+-    --stdin-input data.inspectr.results
++  C:\Tools\OPA\opa.exe eval --format=pretty --data policies\tk --stdin-input data.inspectr.results
  ```
-@@ -461,6 +439,13 @@ Get-Content -Raw data\tk_mundat_data_sharing_v2.json |
- Run commands from the repository root because policy and asset paths
- are relative.
  
-+### Tests
-+
-+```powershell
-+opa test policies\tk -v      # one test per decision-table row
-+pytest tests -v              # evaluator, ERROR isolation, catalogue consistency
-+```
-+
+-Run commands from the repository root because policy and asset paths
+-are relative.
++Run from the repository root; paths are relative.
+ 
  ## Repository structure
  
  ```text
-@@ -468,10 +453,15 @@ app.py                 Streamlit configuration and navigation
- pages/                 Application and research-documentation pages
-   evaluation.py        Upload, evaluator invocation, and findings
- src/
+-app.py                 Streamlit configuration and navigation
+-pages/                 Application and research-documentation pages
+-  evaluation.py        Upload, evaluator invocation, and findings
+-src/
 -  evaluator.py         Input checks, OPA execution, and response processing
-+  evaluator.py         Input checks, per-rule OPA execution, ERROR handling
-+  catalog.py           Rule and status descriptions shown by the app pages
- policies/tk/
+-policies/tk/
 -  policy.rego          Aggregation of six policy reports
 -  TK-*.rego            Inspection rules and report construction
-+  policy.rego          Rule manifest and combined results
-+  lib.rego             Shared helpers (true / false / undetermined facts)
-+  TK-R*.rego           Rules as decision tables
-+  tests/               Rego unit tests, one per decision-table row
-+tests/                 Evaluator and consistency tests (pytest)
-+docs/                  Change records
- data/                  Example blueprints and supporting data
- tk-uc/                 MUNDAT source material
- images/                Application images and logos
-@@ -493,7 +483,10 @@ Definitions below describe usage within this project.
- | Intermediate representation | Planned common model separating input formats from inspection logic. |
- | Dataset | A collection of data, such as Sickleave. |
- | Data source | A system or dataset acting as input to an operation. |
+-data/                  Example blueprints and supporting data
+-tk-uc/                 MUNDAT source material
+-images/                Application images and logos
+-requirements.txt       Python dependencies
++app.py                     Navigation
++pages/                     overview, method, case, inspection, validation
++pages/archive/             Pre-v2 pages (not in navigation)
++src/                       evaluator, catalog, scenarios, ui
++policies/tk/               lib.rego, policy.rego, TK-R1..R3.rego, tests/
++tests/                     pytest integration tests
++data/                      Raw inLUMEN exports, enriched blueprints, taxonomy
++docs/RULESET-V2-CHANGES.md What changed from v1 and why
++tk-uc/                     MUNDAT source material
++images/                    Figures and logos
+ ```
+ 
+ ## Terminology
+ 
+-Definitions below describe usage within this project.
+-
+ | Term | Meaning |
+ |---|---|
+-| Compliance-by-design | Considering compliance expectations during design. |
+-| Requirement | An expectation the design should address. |
+-| Policy interpretation | A scoped interpretation translated into inspection logic. |
+-| Constraint | A precise condition evaluated over a representation. |
+-| Policy-as-Code | Executable representation of policy conditions; currently Rego. |
+ | Blueprint | Machine-readable description of a planned pipeline. |
+-| Intermediate representation | Planned common model separating input formats from inspection logic. |
+-| Dataset | A collection of data, such as Sickleave. |
+-| Data source | A system or dataset acting as input to an operation. |
 -| Control | A safeguard intended to address a risk or requirement. |
+-| Checkpoint / gate | A planned assessment or approval point; declaration does not establish enforcement. |
+-| Evidence | Input observations or derived facts supporting an assessment. |
+-| Metadata catalogue | Reference structure for descriptive and governance records. |
+-| Lineage | Relationships describing data origins and transformations. |
+-| Provenance | Information about origin and processing history. |
+-| Finding | A policy result and its explanatory fields. |
+-| OPA | Policy-evaluation engine used by InspectR. |
+-| Evaluator | Python integration coordinating OPA execution and result processing. |
+-| Infrastructure-as-Code | Infrastructure configuration expressed as code; not natively inspected by the PoC. |
+-
+----
+-
+-MSc thesis research prototype · University of Oslo · Collaboration with SINTEF  
+-Case context: DataPACT MUNDAT, Trondheim Kommune  
+-Planned thesis submission: May 2027
 +| Trigger | The fact that makes a rule's obligation apply. |
 +| Obligation | What the requirement demands once triggered. |
-+| Control | A safeguard in the design intended to meet an obligation. |
-+| Undetermined | A fact the blueprint provides no usable evidence for (absent, null, or not a boolean). |
- | Checkpoint / gate | A planned assessment or approval point; declaration does not establish enforcement. |
- | Evidence | Input observations or derived facts supporting an assessment. |
- | Metadata catalogue | Reference structure for descriptive and governance records. |
++| Control | A safeguard in the design intended to meet the obligation. |
++| Undetermined | No usable evidence for a fact: absent, null, or not a boolean. |
++| Compliance gate | A planned assessment or approval point; declaring it does not establish enforcement. |
++| Evidence | The blueprint observations and derived facts a result is based on. |
++| Policy-as-Code | Executable representation of policy conditions; here Rego evaluated by OPA. |
+ 
+ ---
+ 
+-sirin-koca 2026
++Sirin Koca · MSc Programming and System Architecture, University of Oslo · Supervisors: Ahmet Soylu, Anis Yazidi (UiO); Dumitru Roman, Adela Nedisan Videsjorden, Arda Goknil (SINTEF) · Planned submission May 2027
+diff --git a/app.py b/app.py
+index efa304d..2161b76 100644
+--- a/app.py
++++ b/app.py
+@@ -53,25 +53,19 @@ if "blueprint" not in st.session_state:
+ if "blueprint_filename" not in st.session_state:
+     st.session_state["blueprint_filename"] = None
+ 
+-if "evaluation_results" not in st.session_state:
+-    st.session_state["evaluation_results"] = None
+ 
+ # --------------------------------------------------
+ # NAVIGATION
+ # --------------------------------------------------
+ 
+ pages = [
+-    st.Page("pages/research.py", title=":: Research"),
+-    st.Page("pages/main.py", title=":: InspectR", default=True),
+-    st.Page("pages/datapipeline.py", title=":: Datapipeline"),
+-    st.Page("pages/pac.py", title=":: Engineering PaC"),
+-    st.Page("pages/tk_uc.py", title=":: Use Case"),
+-    st.Page("pages/taxonomy.py", title=":: Taxonomy"),
+-    st.Page("pages/architecture.py", title=":: Architecture"),
+-    st.Page("pages/evaluation.py", title=":: Evaluation"),
+-    st.Page("pages/evidence.py", title=":: Evidence"),
+-    st.Page("pages/about.py", title=":: About"),
++    st.Page("pages/overview.py", title="Overview", default=True),
++    st.Page("pages/method.py", title="Method"),
++    st.Page("pages/case.py", title="Case: TK / MUNDAT"),
++    st.Page("pages/inspection.py", title="Inspect"),
++    st.Page("pages/validation.py", title="Validation"),
+ ]
++# Earlier exploratory pages are kept in pages/archive/ and are not shown.
+ 
+ pg = st.navigation(pages)
+ 
+@@ -83,29 +77,7 @@ st.sidebar.image(
+     "images/uio.png",
+     width=145,
+ )
+-# --------------------------------------------------
+-# GLOBAL FOOTER
+-# --------------------------------------------------
+-
+-st.markdown(
+-    """
+-    <style>
+-    .inspectr-footer {
+-        position: fixed;
+-        bottom: 20px;
+-        left: 270px;
+-        color: magenta;
+-        font-size: 0.85rem;
+-        z-index: 999;
+-    }
+-    </style>
+-
+-    <div class="inspectr-footer">
+-        InspectR PoC 
+-    </div>
+-    """,
+-    unsafe_allow_html=True,
+-)
++st.sidebar.caption("InspectR · iteration 1 · rule set tk-v2.0")
+ 
+ # --------------------------------------------------
+ # RUN SELECTED PAGE
 diff --git a/data/inspectr_taxonomy.json b/data/inspectr_taxonomy.json
 index dc714f0..a053ac8 100644
 --- a/data/inspectr_taxonomy.json
@@ -600,10 +1069,17 @@ index 0000000..ff7274f
 +Not changed: the architecture images in `images/` (they may still show PASS / FAIL / HUMAN), `README-backup-*.md`, and the Logg.
 +
 +All ten pages load without errors in a Streamlit test run.
-diff --git a/pages/architecture.py b/pages/architecture.py
+diff --git a/pages/about.py b/pages/archive/about.py
+similarity index 100%
+rename from pages/about.py
+rename to pages/archive/about.py
+diff --git a/pages/architecture.py b/pages/archive/architecture.py
+similarity index 77%
+rename from pages/architecture.py
+rename to pages/archive/architecture.py
 index 1da07fc..45ee372 100644
 --- a/pages/architecture.py
-+++ b/pages/architecture.py
++++ b/pages/archive/architecture.py
 @@ -27,9 +27,10 @@ with col1:
      - **Design-time inspection**: The blueprint describes planned controls and checkpoints before deployment; it is not runtime evidence.
      - **Shift-Left Compliance**: Catching non-compliance at design-time (CI/CD / pull request phase) prevents 
@@ -629,10 +1105,13 @@ index 1da07fc..45ee372 100644
              language="text",                    
  )  
 \ No newline at end of file
-diff --git a/pages/datapipeline.py b/pages/datapipeline.py
+diff --git a/pages/datapipeline.py b/pages/archive/datapipeline.py
+similarity index 98%
+rename from pages/datapipeline.py
+rename to pages/archive/datapipeline.py
 index 62a7921..347e109 100644
 --- a/pages/datapipeline.py
-+++ b/pages/datapipeline.py
++++ b/pages/archive/datapipeline.py
 @@ -255,7 +255,7 @@ digraph Blueprint {
      ];
  
@@ -657,10 +1136,13 @@ index 62a7921..347e109 100644
          for item in missing:
              st.write(f"• {item}")
  
-diff --git a/pages/evaluation.py b/pages/evaluation.py
+diff --git a/pages/evaluation.py b/pages/archive/evaluation.py
+similarity index 86%
+rename from pages/evaluation.py
+rename to pages/archive/evaluation.py
 index 9e4e4ee..1ac2ef0 100644
 --- a/pages/evaluation.py
-+++ b/pages/evaluation.py
++++ b/pages/archive/evaluation.py
 @@ -4,22 +4,24 @@ import json
  import pandas as pd
  import streamlit as st
@@ -759,38 +1241,472 @@ index 9e4e4ee..1ac2ef0 100644
      )
      uploaded_file = st.file_uploader(
          "JSON blueprint",
-diff --git a/pages/evidence.py b/pages/evidence.py
-index 61ef2fe..faf65ef 100644
---- a/pages/evidence.py
-+++ b/pages/evidence.py
-@@ -1,6 +1,8 @@
- import pandas as pd
- import streamlit as st
- 
+diff --git a/pages/archive/evidence.py b/pages/archive/evidence.py
+new file mode 100644
+index 0000000..faf65ef
+--- /dev/null
++++ b/pages/archive/evidence.py
+@@ -0,0 +1,48 @@
++import pandas as pd
++import streamlit as st
++
 +from src.catalog import RULES, STATUS_ICON
 +
- 
- st.subheader("Evidence Traceability")
- st.caption(
-@@ -11,9 +13,11 @@ st.caption(
- st.info(
-     """
-     **Input evidence** is read from the uploaded JSON blueprint. **Derived
--    evidence** is calculated by Rego from that input. A result confirms only
--    that the planned design satisfies the encoded checkpoint rule; it is not
--    evidence that the design has been implemented or a legal determination.
++
++st.subheader("Evidence Traceability")
++st.caption(
++    "Each active rule identifies the blueprint evidence it reads and the "
++    "design-time conclusion it is allowed to make."
++)
++
++st.info(
++    """
++    **Input evidence** is read from the uploaded JSON blueprint. **Derived
 +    evidence** is calculated by Rego from that input. A fact is **undetermined**
 +    when the field is absent, null, or not a boolean; it then yields UNKNOWN,
 +    never PASS. A result confirms only that the planned design declares the
 +    encoded control; it is not evidence that the design has been implemented
 +    or a legal determination.
++    """
++)
++
++
++def render_rule_table(rows: list[dict]) -> None:
++    st.table(
++        pd.DataFrame(rows, columns=["Traceability item", "Definition"])
++        .set_index("Traceability item")
++    )
++
++
++for rule in RULES:
++    st.markdown(f"#### {rule['id']} — {rule['title']}")
++    st.caption(
++        f"{rule['legal_reference']} · Evidence class: {rule['evidence_class']} · "
++        f"Replaces {rule['replaces']}"
++    )
++    rows = [
++        ("Trigger", rule["trigger"]),
++        ("Control", rule["control"]),
++        ("Input selectors", "; ".join(rule["selectors"])),
++        *[(f"{STATUS_ICON[status]} {status}", text) for status, text in rule["outcomes"].items()],
++        (f"{STATUS_ICON['ERROR']} ERROR", "InspectR could not evaluate the rule (technical fault)."),
++        ("Boundary", rule["boundary"]),
++    ]
++    render_rule_table(
++        [{"Traceability item": item, "Definition": definition} for item, definition in rows]
++    )
+diff --git a/pages/main.py b/pages/archive/main.py
+similarity index 93%
+rename from pages/main.py
+rename to pages/archive/main.py
+index ef23a79..47da1cc 100644
+--- a/pages/main.py
++++ b/pages/archive/main.py
+@@ -74,7 +74,7 @@ with col3:
+     st.info(
+     """ 
+     - Blueprint + policy -> decision\n\n
+-    - PASS/FAIL/HUMAN output with evidence, reason, and remedy.
++    - One status per rule: PASS / FAIL / UNKNOWN / HUMAN / NOT_APPLICABLE (ERROR for tool faults), with evidence, reason, and remedy.
+     - OPA engine independently evaluates the static blueprint against Rego conditions.
      """
- )
- 
-@@ -25,87 +29,20 @@ def render_rule_table(rows: list[dict]) -> None:
+     )    
+@@ -100,6 +100,6 @@ with col5:
+     - **Coverage** — % of legal rules that are statically checkable
+     - **Evidence sufficiency** — availability and completeness of required blueprint evidence
+     - **Explainability** — traceability from requirement to rule, evidence, result, and remedy
+-    - **Tri-state behaviour** — `PASS / FAIL / HUMAN` classifications and documented limits"""
++    - **Status behaviour** — every input reaches exactly one status; undetermined facts never yield `PASS`"""
      )
+ st.divider()
+\ No newline at end of file
+diff --git a/pages/archive/pac.py b/pages/archive/pac.py
+new file mode 100644
+index 0000000..6b3d2a8
+--- /dev/null
++++ b/pages/archive/pac.py
+@@ -0,0 +1,95 @@
++import pandas as pd
++import streamlit as st
++
++from src.catalog import DROPPED_RULES, RULE_SET_VERSION, RULES, STATUS_MODEL
++
++
++st.subheader("Policy-as-Code")
++st.caption("From TK/MUNDAT requirements to evidence-bound design-time OPA/Rego inspection")
++
++st.markdown(
++    f"""
++    In this PoC, selected TK/MUNDAT requirements are operationalised as
++    {len(RULES)} Rego rules (rule set `{RULE_SET_VERSION}`). Each rule has the form
++    **IF trigger THEN control**. OPA evaluates the rules against declared
++    design-time evidence in a static pipeline blueprint. The Python application
++    orchestrates the inspection and presents the machine-readable findings.
++    """
++)
++
++st.markdown("#### Active TK/MUNDAT rule mapping")
++
++st.dataframe(
++    pd.DataFrame(
++        [
++            {
++                "Rule": rule["id"],
++                "Requirement": rule["title"],
++                "Legal basis": rule["legal_reference"],
++                "Trigger": rule["trigger"],
++                "Control": rule["control"],
++                "Evidence class": rule["evidence_class"],
++                "Possible statuses": ", ".join(rule["outcomes"]),
++            }
++            for rule in RULES
++        ]
++    ),
++    use_container_width=True,
++    hide_index=True,
++)
++
++st.caption(
++    "These are TK/MUNDAT-specific design-time operationalisations. They are "
++    "not direct implementations of GDPR or EU AI Act text. Any rule can also "
++    "return ERROR if InspectR itself fails."
++)
++
++with st.expander("Rules dropped from the v1 rule set"):
++    st.dataframe(
++        pd.DataFrame(DROPPED_RULES, columns=["Rule", "Requirement", "Reason"]),
++        use_container_width=True,
++        hide_index=True,
++    )
++
++st.markdown("#### Evaluation flow")
++
++flow_columns = st.columns(5)
++for column, (step, description) in zip(
++    flow_columns,
++    [
++        ("1. Blueprint", "Static JSON evidence"),
++        ("2. Policy", "TK/MUNDAT interpretation"),
++        ("3. Rego", "Executable conditions"),
++        ("4. OPA", "Independent evaluation"),
++        ("5. Result", "Evidence and remedy"),
++    ],
++):
++    with column:
++        with st.container(border=True):
++            st.markdown(f"**{step}**")
++            st.caption(description)
++
++st.markdown("#### Result semantics")
++
++st.markdown(
++    "Each fact in the blueprint is **true**, **false** or **undetermined** "
++    "(absent, null, or not a boolean). An undetermined fact never produces PASS."
++)
++
++st.dataframe(
++    pd.DataFrame(
++        [
++            {"Status": f"{icon} {status}", "Meaning": meaning, "Who acts next": actor}
++            for status, icon, meaning, actor in STATUS_MODEL
++        ]
++    ),
++    use_container_width=True,
++    hide_index=True,
++)
++
++st.markdown("#### Automation boundary")
++st.warning(
++    "A result is valid only relative to the TK/MUNDAT operational interpretation "
++    "and blueprint evidence model. InspectR does not establish complete legal "
++    "compliance or verify runtime behaviour."
++)
+diff --git a/pages/research.py b/pages/archive/research.py
+similarity index 96%
+rename from pages/research.py
+rename to pages/archive/research.py
+index 191cbd0..1272acd 100644
+--- a/pages/research.py
++++ b/pages/archive/research.py
+@@ -220,8 +220,10 @@ with tab6:
+             - **Architectural separation:** Policy is separated from application logic.
+             - **Independent evaluation:** OPA evaluates Rego rules against blueprint evidence.
+             - **Traceability:** Each rule exposes its interpretation, evidence, result, and remedy.
+-            - **Evidence sufficiency:** `PASS`, `FAIL`, and `HUMAN` distinguish a
+-            defined design control, a missing design control, and insufficient evidence.
++            - **Evidence sufficiency:** `PASS`, `FAIL`, `UNKNOWN`, `HUMAN`, and
++            `NOT_APPLICABLE` distinguish a declared control, a control declared absent,
++            undetermined evidence, a required legal judgement, and a rule that does not apply.
++            `ERROR` marks a fault in InspectR itself.
+             - **Reproducibility:** The same blueprint produces repeatable rule results.
+             - **Limit visibility:** Missing evidence, alternative interpretations, and
+             rule limitations are documented.
+diff --git a/pages/taxonomy.py b/pages/archive/taxonomy.py
+similarity index 98%
+rename from pages/taxonomy.py
+rename to pages/archive/taxonomy.py
+index a9d8e26..b80b4e3 100644
+--- a/pages/taxonomy.py
++++ b/pages/archive/taxonomy.py
+@@ -152,7 +152,7 @@ overview_df = pd.DataFrame([
+     {
+         "Level": "Rule metadata",
+         "Meaning": "Rule ID, evidence fields, legal basis, and relationship type",
+-        "Example": "TK-006; share_dataset.properties.encryption_in_transit_configured",
++        "Example": "TK-R1; dpia_check.properties.dpia_checkpoint_defined",
+     },
+ ])
  
- 
+diff --git a/pages/archive/tk_uc.py b/pages/archive/tk_uc.py
+new file mode 100644
+index 0000000..3407889
+--- /dev/null
++++ b/pages/archive/tk_uc.py
+@@ -0,0 +1,96 @@
++import pandas as pd
++import streamlit as st
++
++from src.catalog import RULES, STATUSES
++
++
++st.subheader("TK Use Case — MUNDAT")
++st.caption(
++    "This page describes the bounded Sickleave scenario and its planned "
++    "design-time compliance checkpoints."
++)
++st.caption("Trondheim Kommune data-sharing use case")
++
++st.info(
++    """
++    InspectR uses a simplified TK/MUNDAT data-sharing workflow as its
++    proof-of-concept case. The active engine evaluates three design-time rules
++    against a compliance-enriched JSON blueprint. This is not a complete
++    reproduction of the MUNDAT workflow or a complete legal assessment.
++    """
++)
++
++st.markdown("#### Use-case context")
++
++st.dataframe(
++    pd.DataFrame(
++        [
++            {
++                "Aspect": "Use case",
++                "Description": "Municipal data-sharing requests assembled from one or more data sources.",
++            },
++            {
++                "Aspect": "Input",
++                "Description": "A static JSON blueprint containing nodes, connections, and declared evidence.",
++            },
++            {
++                "Aspect": "Policy engine",
++                "Description": "OPA evaluates three TK/MUNDAT Rego rules independently of the Streamlit interface.",
++            },
++            {
++                "Aspect": "Output",
++                "Description": "One result per rule (" + ", ".join(STATUSES) + ") with evidence, reason, and remedy.",
++            },
++        ]
++    ),
++    use_container_width=True,
++    hide_index=True,
++)
++
++st.markdown("#### TK/MUNDAT pipeline represented in the PoC")
++
++st.dataframe(
++    pd.DataFrame(
++        [
++            ("request", "Request intake"),
++            ("classify_request", "Request and data classification"),
++            ("dpia_check", "DPIA and risk-assessment gate"),
++            ("metadata_catalog", "Catalogue records for sources and lineage"),
++            ("data sources", "Municipal data sources"),
++            ("extract_data", "Data processing"),
++            ("integrate_dataset", "Data integration and lineage"),
++            ("anonymisation", "Privacy control"),
++            ("sharing_assessment", "Sharing agreement and recipient approval"),
++            ("share_dataset", "Encrypted data transfer"),
++        ],
++        columns=["Blueprint node or group", "Purpose in the PoC"],
++    ),
++    use_container_width=True,
++    hide_index=True,
++)
++
++st.markdown("#### Active TK policy rules")
++
++rules = [
++    {
++        "Rule": rule["id"],
++        "Requirement": rule["title"],
++        "Trigger": rule["trigger"],
++        "Control": rule["control"],
++        **{status: rule["outcomes"].get(status, "Not produced by this rule.") for status in STATUSES if status != "ERROR"},
++        "Boundary": rule["boundary"],
++    }
++    for rule in RULES
++]
++
++st.dataframe(
++    pd.DataFrame(rules),
++    use_container_width=True,
++    hide_index=True,
++)
++
++st.caption(
++    "The three rules are operational proxies for the TK/MUNDAT PoC. They do not "
++    "establish complete GDPR compliance, reproduce the full MUNDAT process, or "
++    "replace legal or organisational judgement."
++)
+diff --git a/pages/case.py b/pages/case.py
+new file mode 100644
+index 0000000..8b0dac4
+--- /dev/null
++++ b/pages/case.py
+@@ -0,0 +1,109 @@
++import json
++from pathlib import Path
++
++import streamlit as st
++
++from src.catalog import DROPPED_RULES, RULE_FACTS, RULES
++from src.ui import page_header, table
++
++page_header(
++    "Case: TK / MUNDAT",
++    "Which pipeline is inspected, and what evidence does its blueprint provide?",
++)
++
++st.markdown(
++    "Trondheim Kommune (TK) receives requests from researchers and companies for "
++    "municipal data. The **Sickleave** scenario assembles a research dataset from "
++    "health-services and citizen-registry sources, integrates and anonymises it, "
++    "and shares it with an external recipient. It involves special-category "
++    "health data, integration of sources, and sharing for a new purpose."
++)
++
++V2 = json.loads(Path("data/tk_mundat_data_sharing_v2.json").read_text(encoding="utf-8"))
++RAW = json.loads(Path("tk-uc/inlumen-tk-uc.json").read_text(encoding="utf-8"))
++
++# ---------------------------------------------------------------- pipeline
++st.subheader("Pipeline design (enriched blueprint V2)")
++FILL = {
++    "compliance_gate": "#FFE3B3",
++    "data_source": "#D9E5F4",
++    "data_integration": "#D9E5F4",
++    "data_transfer": "#F6D5D5",
++}
++RULE_OF = {"compliance_gate": "TK-R1 · TK-R3", "data_integration": "TK-R2", "data_transfer": "TK-R3", "data_source": "TK-R1 · TK-R3"}
++nodes = "\n".join(
++    f'"{n["id"]}" [label="{n["id"]}\\n({n["type"]})'
++    + (f'\\n{RULE_OF[n["type"]]}' if n["type"] in RULE_OF else "")
++    + f'" fillcolor="{FILL.get(n["type"], "#F2F2F2")}"];'
++    for n in V2["pipeline"]["nodes"]
++)
++edges = "\n".join(
++    f'"{c["from"]}" -> "{c["to"]}" [style={"dashed" if c["flow_type"] in ("metadata", "authorisation") else "solid"}];'
++    for c in V2["pipeline"]["connections"]
++)
++st.graphviz_chart(
++    f"""digraph {{
++        rankdir=LR; bgcolor="transparent";
++        node [shape=box style="rounded,filled" fontname="Helvetica" fontsize=10 color="#8A9BB5"];
++        edge [color="#8A9BB5" arrowsize=0.6];
++        {nodes}
++        {edges}
++    }}""",
++    use_container_width=True,
++)
++st.caption(
++    "Coloured nodes are the ones the rules read. Dashed edges are metadata or "
++    "authorisation flows; solid edges are control and data flows."
++)
++
++# ---------------------------------------------------------------- native vs enriched
++st.subheader("Native export vs. enriched blueprint")
++left, right = st.columns(2, gap="large")
++with left.container(border=True):
++    st.markdown("**Raw inLUMEN export**")
++    st.write(
++        f"{len(RAW['pipeline']['nodes'])} nodes with generic kinds "
++        f"({', '.join(sorted({n['kind'] for n in RAW['pipeline']['nodes']}))}). "
++        "Every `parameters` field is empty. None of the facts the rules need is present."
++    )
++with right.container(border=True):
++    st.markdown("**Enriched blueprint (V2)**")
++    st.write(
++        f"{len(V2['pipeline']['nodes'])} typed nodes and "
++        f"{len(V2['pipeline']['connections'])} connections. Compliance facts were "
++        "added **manually** so the rules have evidence to read."
++    )
++st.markdown(
++    "The enrichment is a research finding, not a workaround: it measures the gap "
++    "between what pipeline tooling exports and what inspection needs (RQ1)."
++)
++table(
++    [{"Rule": r, "Fact": f, "Role": role, "Provenance": p} for r, f, role, p in RULE_FACTS],
++)
++st.caption(
++    "Provenance: S = structural (from the pipeline graph), D = derivable from "
++    "tooling, M = manual declaration, H = human judgement. Today every non-structural "
++    "fact is M or H."
++)
++
++# ---------------------------------------------------------------- rule set
++st.subheader("Rule set")
++table(
++    [
++        {
++            "Rule": r["id"],
++            "Title": r["title"],
++            "TK requirement": r["tk_requirement"][0],
++            "Legal basis": r["legal_reference"],
++            "Evidence class": r["evidence_class"],
++            "Statuses": ", ".join(r["outcomes"]),
++        }
++        for r in RULES
++    ]
++)
++st.caption(
++    "Three rules, one per evidence class (declared, derivable, judgement): together "
++    "they exercise every status and can be tested exhaustively."
++)
++with st.expander("Rules dropped from iteration 1"):
++    table(DROPPED_RULES, columns=["Rule", "Requirement", "Reason"])
+diff --git a/pages/evidence.py b/pages/evidence.py
+deleted file mode 100644
+index 61ef2fe..0000000
+--- a/pages/evidence.py
++++ /dev/null
+@@ -1,111 +0,0 @@
+-import pandas as pd
+-import streamlit as st
+-
+-
+-st.subheader("Evidence Traceability")
+-st.caption(
+-    "Each active rule identifies the blueprint evidence it reads and the "
+-    "design-time conclusion it is allowed to make."
+-)
+-
+-st.info(
+-    """
+-    **Input evidence** is read from the uploaded JSON blueprint. **Derived
+-    evidence** is calculated by Rego from that input. A result confirms only
+-    that the planned design satisfies the encoded checkpoint rule; it is not
+-    evidence that the design has been implemented or a legal determination.
+-    """
+-)
+-
+-
+-def render_rule_table(rows: list[dict]) -> None:
+-    st.table(
+-        pd.DataFrame(rows, columns=["Traceability item", "Definition"])
+-        .set_index("Traceability item")
+-    )
+-
+-
 -rules = [
 -    {
 -        "id": "TK-001",
@@ -867,80 +1783,371 @@ index 61ef2fe..faf65ef 100644
 -]
 -
 -for rule in rules:
-+for rule in RULES:
-     st.markdown(f"#### {rule['id']} — {rule['title']}")
+-    st.markdown(f"#### {rule['id']} — {rule['title']}")
 -    st.caption(rule["reference"])
-+    st.caption(
-+        f"{rule['legal_reference']} · Evidence class: {rule['evidence_class']} · "
-+        f"Replaces {rule['replaces']}"
-+    )
-+    rows = [
-+        ("Trigger", rule["trigger"]),
-+        ("Control", rule["control"]),
-+        ("Input selectors", "; ".join(rule["selectors"])),
-+        *[(f"{STATUS_ICON[status]} {status}", text) for status, text in rule["outcomes"].items()],
-+        (f"{STATUS_ICON['ERROR']} ERROR", "InspectR could not evaluate the rule (technical fault)."),
-+        ("Boundary", rule["boundary"]),
-+    ]
-     render_rule_table(
+-    render_rule_table(
 -        [
 -            {"Traceability item": item, "Definition": definition}
 -            for item, definition in rule["rows"]
 -        ]
-+        [{"Traceability item": item, "Definition": definition} for item, definition in rows]
-     )
-diff --git a/pages/main.py b/pages/main.py
-index ef23a79..47da1cc 100644
---- a/pages/main.py
-+++ b/pages/main.py
-@@ -74,7 +74,7 @@ with col3:
-     st.info(
-     """ 
-     - Blueprint + policy -> decision\n\n
--    - PASS/FAIL/HUMAN output with evidence, reason, and remedy.
-+    - One status per rule: PASS / FAIL / UNKNOWN / HUMAN / NOT_APPLICABLE (ERROR for tool faults), with evidence, reason, and remedy.
-     - OPA engine independently evaluates the static blueprint against Rego conditions.
-     """
-     )    
-@@ -100,6 +100,6 @@ with col5:
-     - **Coverage** — % of legal rules that are statically checkable
-     - **Evidence sufficiency** — availability and completeness of required blueprint evidence
-     - **Explainability** — traceability from requirement to rule, evidence, result, and remedy
--    - **Tri-state behaviour** — `PASS / FAIL / HUMAN` classifications and documented limits"""
-+    - **Status behaviour** — every input reaches exactly one status; undetermined facts never yield `PASS`"""
-     )
- st.divider()
-\ No newline at end of file
-diff --git a/pages/pac.py b/pages/pac.py
-index 93ccbfd..6b3d2a8 100644
---- a/pages/pac.py
-+++ b/pages/pac.py
-@@ -1,77 +1,56 @@
- import pandas as pd
- import streamlit as st
- 
-+from src.catalog import DROPPED_RULES, RULE_SET_VERSION, RULES, STATUS_MODEL
+-    )
+diff --git a/pages/inspection.py b/pages/inspection.py
+new file mode 100644
+index 0000000..e084d4e
+--- /dev/null
++++ b/pages/inspection.py
+@@ -0,0 +1,59 @@
++import json
 +
- 
- st.subheader("Policy-as-Code")
- st.caption("From TK/MUNDAT requirements to evidence-bound design-time OPA/Rego inspection")
- 
- st.markdown(
++import streamlit as st
++
++from src.evaluator import evaluate
++from src.scenarios import SCENARIOS, build
++from src.ui import page_header, render_results
++
++page_header(
++    "Inspect",
++    "What does InspectR conclude for a given blueprint, and on what evidence?",
++)
++
++UPLOAD = "Upload a blueprint"
++labels = [label for _, label, *_ in SCENARIOS] + [UPLOAD]
++by_label = {label: (key, change, expected) for key, label, change, _, expected in SCENARIOS}
++
++choice = st.radio(
++    "Blueprint",
++    labels,
++    horizontal=True,
++    label_visibility="collapsed",
++    key="inspect_choice",
++)
++
++blueprint, expected = None, None
++if choice == UPLOAD:
++    uploaded = st.file_uploader("JSON blueprint", type=["json"], label_visibility="collapsed")
++    if uploaded is not None:
++        try:
++            blueprint = json.loads(uploaded.getvalue().decode("utf-8"))
++        except (UnicodeDecodeError, json.JSONDecodeError) as error:
++            st.error(f"{uploaded.name} is not valid UTF-8 JSON: {error}")
++    else:
++        st.caption("Choose a JSON blueprint to inspect.")
++else:
++    key, change, expected = by_label[choice]
++    blueprint = build(key)
++    st.caption(f"**Change from V2:** {change}")
++
++if blueprint is not None:
++    try:
++        with st.spinner("Evaluating with OPA..."):
++            results = evaluate(blueprint)
++    except (RuntimeError, ValueError) as error:
++        results = None
++        st.error(f"InspectR could not run: {error}")
++
++    if results is not None:
++        render_results(results, expected)
++        if expected:
++            ok = all(r["status"] == expected.get(r["rule"]) for r in results)
++            (st.success if ok else st.error)(
++                "All results match the expected statuses for this scenario."
++                if ok else "At least one result differs from the expected status."
++            )
++
++    with st.expander("Blueprint JSON submitted to OPA"):
++        st.code(json.dumps(blueprint, indent=2, ensure_ascii=False), language="json", line_numbers=True)
+diff --git a/pages/method.py b/pages/method.py
+new file mode 100644
+index 0000000..d043b83
+--- /dev/null
++++ b/pages/method.py
+@@ -0,0 +1,138 @@
++import streamlit as st
++
++from src.catalog import RULES, STATUS_MODEL
++from src.ui import badge, page_header, table
++
++page_header(
++    "Method",
++    "How does a written requirement become a machine-checkable verdict?",
++)
++
++# ---------------------------------------------------------------- chain
++st.subheader("From requirement to verdict")
++for column, (step, text) in zip(
++    st.columns(5),
++    [
++        ("1 · Requirement", "What the TK documents and the law demand, in words."),
++        ("2 · Rule", "The requirement scoped as IF trigger THEN control."),
++        ("3 · Facts", "The blueprint fields the rule reads: true, false or undetermined."),
++        ("4 · Evaluation", "OPA applies the rule's decision table to the facts."),
++        ("5 · Result", "One status, with reason, evidence and remedy."),
++    ],
++):
++    with column.container(border=True):
++        st.markdown(f"**{step}**")
++        st.caption(text)
++
++# ---------------------------------------------------------------- logic
++st.subheader("Decision logic")
++st.markdown(
++    "Every rule has the same shape. A fact the rule needs is **undetermined** "
++    "when the blueprint gives no usable evidence for it (absent, null, or not "
++    "a boolean). An undetermined fact never produces PASS."
++)
++table(
++    [
++        ("undetermined", "any", badge("UNKNOWN")),
++        ("false", "any", badge("NOT_APPLICABLE")),
++        ("true", "false", badge("FAIL")),
++        ("true", "undetermined", badge("UNKNOWN")),
++        ("true", "true", f"{badge('PASS')}  ({badge('HUMAN')} for judgement rules)"),
++    ],
++    columns=["Trigger", "Control", "Status"],
++)
++st.caption(f"{badge('ERROR')} sits outside the table: InspectR failed, not the blueprint.")
++table(
++[{"Status": badge(s), "Meaning": m, "Who acts next": a} for s, _, m, a in STATUS_MODEL],
++)
++
++# ---------------------------------------------------------------- worked example
++st.subheader("Worked example: TK-R1")
++r1 = RULES[0]
++steps = st.tabs(["1 · Requirement", "2 · Rule", "3 · Rego", "4 · Facts in V2", "5 · Result"])
++with steps[0]:
++    st.markdown(f"**TK need ({r1['tk_requirement'][0]}):** “{r1['tk_requirement'][1]}”")
++    st.caption(f"Legal basis: {r1['legal_reference']}")
++with steps[1]:
++    st.markdown(f"**IF** {r1['trigger']}  \n**THEN** {r1['control']}")
++    st.caption(
++        "Scoping decisions: special-category data (Art. 9) is the trigger; the DPIA "
++        "and risk assessment are merged because they share trigger, gate and article."
++    )
++with steps[2]:
++    st.code(
++        """trigger_true if {
++    some s in sources
++    lib.is_true(s, "contains_special_category_data")
++}
++
++passing_gate_ids := [g.id |
++    some g in relevant_gates
++    every f in control_fields { lib.is_true(g, f) }
++]
++
++result := report("UNKNOWN", 1, ...) if { trigger_unknown }
++     else := report("NOT_APPLICABLE", 2, ...) if { trigger_false }
++     else := report("FAIL", 3, ...) if { trigger_true; count(gates) == 0 }
++     else := report("FAIL", 4, ...) if { trigger_true; control_false }
++     else := report("PASS", 5, ...) if { trigger_true; count(passing_gate_ids) > 0 }
++     else := report("UNKNOWN", 6, ...) if { trigger_true }
++
++default result := { ..."status": "ERROR"... }   # row 7, unreachable by design""",
++        language="text",
++    )
++    st.caption("Excerpt of policies/tk/TK-R1.rego. Rows are evaluated top to bottom; the first match wins.")
++with steps[3]:
++    table(
++        [
++            ("health_services", "contains_special_category_data", "true", "Trigger"),
++            ("citizen_registry", "contains_special_category_data", "false", "Trigger"),
++            ("dpia_check", "dpia_checkpoint_defined", "true", "Control"),
++            ("dpia_check", "risk_assessment_checkpoint_defined", "true", "Control"),
++        ],
++        columns=["Node", "Field", "Value", "Role"],
++    )
++    st.caption("These fields were added to the blueprint manually; inLUMEN does not export them (see Case).")
++with steps[4]:
++    st.success(
++        "**🟢 PASS · decision-table row 5.** Special-category data is processed and gate "
++        "'dpia_check' declares both a DPIA and a risk-assessment checkpoint."
++    )
++    st.caption("PASS means the design declares the control, not that the pipeline is compliant.")
++
++# ---------------------------------------------------------------- reference
++with st.expander("Definitions"):
++    table(
++        [
++            ("Requirement", "What the law or the organisation demands, in words."),
++            ("Obligation", "What the requirement demands once triggered."),
++            ("Rule", "A requirement written as IF trigger THEN control."),
++            ("Trigger", "The fact that makes the obligation apply."),
++            ("Control", "The safeguard in the design that meets the obligation."),
++            ("Fact", "A typed blueprint field a rule reads: true, false or undetermined."),
++            ("Undetermined", "No usable evidence for a fact: absent, null, or wrong type."),
++            ("Evidence", "The blueprint field read, its observed value and its expected value."),
++            ("Machine-checkable", "Expressed as a typed field the engine can read without a human."),
++            ("Status", "The outcome of one rule for one blueprint."),
++            ("Result", "Status plus reason, evidence, legal reference and remedy."),
++            ("Design-time", "Checked on the blueprint before the pipeline is built or run."),
++            ("Fail-closed", "Undetermined evidence never becomes PASS."),
++        ],
++        columns=["Term", "Definition"],
++    )
++
++with st.expander("Design decisions and justification"):
++    table(
++        [
++            ("Rule = IF trigger THEN control", "Legal obligations are conditional.", "Compliance-by-design (Governatori; LegalRuleML)"),
++            ("Three fact values", "Forcing an undetermined fact into true or false invents information.", "Three-valued logic"),
++            ("Undetermined → UNKNOWN, never PASS", "A false PASS hides a risk.", "Fail-closed principle"),
++            ("NOT_APPLICABLE as own status", "'Does not apply' differs from 'satisfied'.", "AWS Config; SARIF"),
++            ("HUMAN as own status", "Some requirements are legal judgements.", "SARIF 'review'"),
++            ("ERROR separate from verdicts", "A tool failure says nothing about the blueprint.", "Kyverno 'error'"),
++            ("Evidence in every result", "A verdict without evidence cannot be audited.", "GDPR Art. 5(2)"),
++            ("Each rule evaluated in isolation", "One fault must not suppress other results.", "Fault isolation"),
++            ("Each rule a complete decision table", "Every input reaches exactly one status; one test per row.", "Decision-table testing"),
++        ],
++        columns=["Decision", "Justification", "Grounding"],
++    )
+diff --git a/pages/overview.py b/pages/overview.py
+new file mode 100644
+index 0000000..9d2ae82
+--- /dev/null
++++ b/pages/overview.py
+@@ -0,0 +1,118 @@
++import streamlit as st
++
++from src.catalog import RULE_SET_VERSION, RULES, STATUSES
++from src.ui import page_header, table
++
++page_header(
++    "InspectR",
++    "Design-time compliance inspection of data-pipeline blueprints · "
++    "MSc thesis, University of Oslo · SINTEF / DataPACT",
++)
++
++st.markdown(
++    "InspectR checks a **planned** data pipeline against compliance rules "
++    "**before it is built**. It reads a machine-readable pipeline blueprint, "
++    "evaluates Policy-as-Code rules with Open Policy Agent (OPA), and returns "
++    "one traceable result per rule: status, reason, evidence and remedy."
++)
++
++# ---------------------------------------------------------------- problem
++st.subheader("Problem")
++left, mid, right = st.columns(3)
++with left.container(border=True):
++    st.markdown("**Missing tooling**")
++    st.write(
++        "Design-time privacy compliance has been studied with models "
++        "([Torre et al.](https://link.springer.com/article/10.1007/s10270-021-00935-5); "
++        "[Pandit et al.](https://link.springer.com/chapter/10.1007/978-3-030-33220-4_2)), "
++        "but automated, tool-supported checking integrated into design "
++        "environments is still lacking "
++        "([SLR on GDPR modelling](https://arxiv.org/html/2604.16361))."
++    )
++with mid.container(border=True):
++    st.markdown("**Different target for Policy-as-Code**")
++    st.write(
++        "Policy-as-Code with OPA mostly targets infrastructure, CI/CD and "
++        "Kubernetes configurations "
++        "([MDPI Computers, 2026](https://www.mdpi.com/2073-431X/15/7/453)), "
++        "not data or AI pipeline designs."
++    )
++with right.container(border=True):
++    st.markdown("**Missing evidence in the blueprint**")
++    st.write(
++        "inLUMEN exports pipeline structure but no compliance evidence "
++        "(personal-data flags, DPIA status, approvals). The PoC therefore "
++        "uses a manually enriched blueprint."
++    )
++
++# ---------------------------------------------------------------- RQs
++st.subheader("Research questions")
++st.markdown(
++    "**Main RQ.** How can a design-time policy engine be architected to inspect "
++    "compliance properties of data/AI pipeline blueprints in a way that is "
++    "traceable, reliable and independent of the use case and pipeline tool?"
++)
++for column, (title, text) in zip(
++    st.columns(3),
++    [
++        ("RQ1 · Evidence model",
++         "What compliance-relevant information must a blueprint contain for "
++         "policy-based inspection, and how much can pipeline tooling derive "
++         "versus manual annotation?"),
++        ("RQ2 · Architecture",
++         "Which architectural design supports reuse across use cases and "
++         "blueprint formats (intermediate representation with adapters, "
++         "policy packs, explicit result semantics)?"),
++        ("RQ3 · Evaluation",
++         "How reliable, explainable and efficient are InspectR's findings "
++         "compared with manual expert review, across DataPACT use cases?"),
++    ],
++):
++    with column.container(border=True):
++        st.markdown(f"**{title}**")
++        st.write(text)
++
++# ---------------------------------------------------------------- artefact
++st.subheader("Artefact (iteration 1)")
++st.graphviz_chart(
++    """
++    digraph {
++        rankdir=LR; bgcolor="transparent";
++        node [shape=box style="rounded,filled" fontname="Helvetica" fontsize=11 fillcolor="#EEF2F8" color="#8A9BB5"];
++        edge [color="#8A9BB5"];
++        req [label="TK requirement\\n(text)"];
++        rule [label="Rego rule\\nIF trigger THEN control"];
++        bp [label="Pipeline blueprint\\n(JSON facts)"];
++        opa [label="OPA\\nevaluation" fillcolor="#142744" fontcolor="white" color="#142744"];
++        res [label="Result per rule\\nstatus · reason\\nevidence · remedy"];
++        req -> rule -> opa; bp -> opa; opa -> res;
++    }
++    """,
++    use_container_width=True,
++)
++c1, c2, c3 = st.columns(3)
++c1.metric("Rules", len(RULES), help=f"Rule set {RULE_SET_VERSION}")
++c2.metric("Statuses", len(STATUSES), help=", ".join(STATUSES))
++c3.metric("Use cases", 1, help="TK/MUNDAT (Trondheim Kommune)")
++
++# ---------------------------------------------------------------- method + scope
++st.subheader("Method and scope")
++st.markdown(
++    "Design Science Research ([Hevner et al., 2004](https://aisel.aisnet.org/misq/vol28/iss1/6/)) "
++    "with two to three build–evaluate iterations. This PoC is **iteration 1**: "
++    "one use case, three rules, the blueprint evaluated directly (no "
++    "intermediate representation yet)."
++)
++table(
++    [
++        ("Design-time inspection of planned pipelines", "Runtime monitoring and enforcement"),
++        ("Evidence model and (planned) intermediate representation", "Automated interpretation of legal text"),
++        ("Rules as organisational interpretations, validated by domain experts", "Proof of legal compliance or certification"),
++        ("Explicit result semantics for undetermined evidence", "Broad AI Act coverage"),
++    ],
++    columns=["In scope", "Out of scope"],
++)
++st.caption(
++    "Contribution: an architecture, an evidence model and an evaluated artefact. "
++    "Not a contribution: legal interpretation, Policy-as-Code or OPA themselves."
++)
+diff --git a/pages/pac.py b/pages/pac.py
+deleted file mode 100644
+index 93ccbfd..0000000
+--- a/pages/pac.py
++++ /dev/null
+@@ -1,115 +0,0 @@
+-import pandas as pd
+-import streamlit as st
+-
+-
+-st.subheader("Policy-as-Code")
+-st.caption("From TK/MUNDAT requirements to evidence-bound design-time OPA/Rego inspection")
+-
+-st.markdown(
 -    """
-+    f"""
-     In this PoC, selected TK/MUNDAT requirements are operationalised as
+-    In this PoC, selected TK/MUNDAT requirements are operationalised as
 -    six Rego rules. OPA evaluates those rules against declared design-time
 -    evidence in a static pipeline blueprint. The Python application orchestrates
 -    the inspection and presents the machine-readable findings.
-+    {len(RULES)} Rego rules (rule set `{RULE_SET_VERSION}`). Each rule has the form
-+    **IF trigger THEN control**. OPA evaluates the rules against declared
-+    design-time evidence in a static pipeline blueprint. The Python application
-+    orchestrates the inspection and presents the machine-readable findings.
-     """
- )
- 
- st.markdown("#### Active TK/MUNDAT rule mapping")
- 
+-    """
+-)
+-
+-st.markdown("#### Active TK/MUNDAT rule mapping")
+-
 -rule_mapping = [
 -    {
 -        "Rule": "TK-001",
@@ -986,47 +2193,37 @@ index 93ccbfd..6b3d2a8 100644
 -    },
 -]
 -
- st.dataframe(
+-st.dataframe(
 -    pd.DataFrame(rule_mapping),
-+    pd.DataFrame(
-+        [
-+            {
-+                "Rule": rule["id"],
-+                "Requirement": rule["title"],
-+                "Legal basis": rule["legal_reference"],
-+                "Trigger": rule["trigger"],
-+                "Control": rule["control"],
-+                "Evidence class": rule["evidence_class"],
-+                "Possible statuses": ", ".join(rule["outcomes"]),
-+            }
-+            for rule in RULES
-+        ]
-+    ),
-     use_container_width=True,
-     hide_index=True,
- )
- 
- st.caption(
-     "These are TK/MUNDAT-specific design-time operationalisations. They are "
+-    use_container_width=True,
+-    hide_index=True,
+-)
+-
+-st.caption(
+-    "These are TK/MUNDAT-specific design-time operationalisations. They are "
 -    "not direct implementations of GDPR or EU AI Act text."
-+    "not direct implementations of GDPR or EU AI Act text. Any rule can also "
-+    "return ERROR if InspectR itself fails."
- )
- 
-+with st.expander("Rules dropped from the v1 rule set"):
-+    st.dataframe(
-+        pd.DataFrame(DROPPED_RULES, columns=["Rule", "Requirement", "Reason"]),
-+        use_container_width=True,
-+        hide_index=True,
-+    )
-+
- st.markdown("#### Evaluation flow")
- 
- flow_columns = st.columns(5)
-@@ -92,20 +71,21 @@ for column, (step, description) in zip(
- 
- st.markdown("#### Result semantics")
- 
+-)
+-
+-st.markdown("#### Evaluation flow")
+-
+-flow_columns = st.columns(5)
+-for column, (step, description) in zip(
+-    flow_columns,
+-    [
+-        ("1. Blueprint", "Static JSON evidence"),
+-        ("2. Policy", "TK/MUNDAT interpretation"),
+-        ("3. Rego", "Executable conditions"),
+-        ("4. OPA", "Independent evaluation"),
+-        ("5. Result", "Evidence and remedy"),
+-    ],
+-):
+-    with column:
+-        with st.container(border=True):
+-            st.markdown(f"**{step}**")
+-            st.caption(description)
+-
+-st.markdown("#### Result semantics")
+-
 -result_columns = st.columns(3)
 -for column, title, description in zip(
 -    result_columns,
@@ -1035,107 +2232,97 @@ index 93ccbfd..6b3d2a8 100644
 -        "The blueprint defines the control required by the encoded design-time rule.",
 -        "The blueprint explicitly lacks or disables a required design-time control.",
 -        "The blueprint is missing enough information for automated inspection.",
-+st.markdown(
-+    "Each fact in the blueprint is **true**, **false** or **undetermined** "
-+    "(absent, null, or not a boolean). An undetermined fact never produces PASS."
-+)
-+
-+st.dataframe(
-+    pd.DataFrame(
-+        [
-+            {"Status": f"{icon} {status}", "Meaning": meaning, "Who acts next": actor}
-+            for status, icon, meaning, actor in STATUS_MODEL
-+        ]
-     ),
+-    ),
 -):
 -    with column:
 -        with st.container(border=True):
 -            st.markdown(f"**{title}**")
 -            st.write(description)
-+    use_container_width=True,
-+    hide_index=True,
-+)
- 
- st.markdown("#### Automation boundary")
- st.warning(
-diff --git a/pages/research.py b/pages/research.py
-index 191cbd0..1272acd 100644
---- a/pages/research.py
-+++ b/pages/research.py
-@@ -220,8 +220,10 @@ with tab6:
-             - **Architectural separation:** Policy is separated from application logic.
-             - **Independent evaluation:** OPA evaluates Rego rules against blueprint evidence.
-             - **Traceability:** Each rule exposes its interpretation, evidence, result, and remedy.
--            - **Evidence sufficiency:** `PASS`, `FAIL`, and `HUMAN` distinguish a
--            defined design control, a missing design control, and insufficient evidence.
-+            - **Evidence sufficiency:** `PASS`, `FAIL`, `UNKNOWN`, `HUMAN`, and
-+            `NOT_APPLICABLE` distinguish a declared control, a control declared absent,
-+            undetermined evidence, a required legal judgement, and a rule that does not apply.
-+            `ERROR` marks a fault in InspectR itself.
-             - **Reproducibility:** The same blueprint produces repeatable rule results.
-             - **Limit visibility:** Missing evidence, alternative interpretations, and
-             rule limitations are documented.
-diff --git a/pages/taxonomy.py b/pages/taxonomy.py
-index a9d8e26..b80b4e3 100644
---- a/pages/taxonomy.py
-+++ b/pages/taxonomy.py
-@@ -152,7 +152,7 @@ overview_df = pd.DataFrame([
-     {
-         "Level": "Rule metadata",
-         "Meaning": "Rule ID, evidence fields, legal basis, and relationship type",
--        "Example": "TK-006; share_dataset.properties.encryption_in_transit_configured",
-+        "Example": "TK-R1; dpia_check.properties.dpia_checkpoint_defined",
-     },
- ])
- 
+-
+-st.markdown("#### Automation boundary")
+-st.warning(
+-    "A result is valid only relative to the TK/MUNDAT operational interpretation "
+-    "and blueprint evidence model. InspectR does not establish complete legal "
+-    "compliance or verify runtime behaviour."
+-)
 diff --git a/pages/tk_uc.py b/pages/tk_uc.py
-index 3c9f23d..3407889 100644
+deleted file mode 100644
+index 3c9f23d..0000000
 --- a/pages/tk_uc.py
-+++ b/pages/tk_uc.py
-@@ -1,6 +1,8 @@
- import pandas as pd
- import streamlit as st
- 
-+from src.catalog import RULES, STATUSES
-+
- 
- st.subheader("TK Use Case — MUNDAT")
- st.caption(
-@@ -12,7 +14,7 @@ st.caption("Trondheim Kommune data-sharing use case")
- st.info(
-     """
-     InspectR uses a simplified TK/MUNDAT data-sharing workflow as its
++++ /dev/null
+@@ -1,144 +0,0 @@
+-import pandas as pd
+-import streamlit as st
+-
+-
+-st.subheader("TK Use Case — MUNDAT")
+-st.caption(
+-    "This page describes the bounded Sickleave scenario and its planned "
+-    "design-time compliance checkpoints."
+-)
+-st.caption("Trondheim Kommune data-sharing use case")
+-
+-st.info(
+-    """
+-    InspectR uses a simplified TK/MUNDAT data-sharing workflow as its
 -    proof-of-concept case. The active engine evaluates six design-time rules
-+    proof-of-concept case. The active engine evaluates three design-time rules
-     against a compliance-enriched JSON blueprint. This is not a complete
-     reproduction of the MUNDAT workflow or a complete legal assessment.
-     """
-@@ -33,11 +35,11 @@ st.dataframe(
-             },
-             {
-                 "Aspect": "Policy engine",
+-    against a compliance-enriched JSON blueprint. This is not a complete
+-    reproduction of the MUNDAT workflow or a complete legal assessment.
+-    """
+-)
+-
+-st.markdown("#### Use-case context")
+-
+-st.dataframe(
+-    pd.DataFrame(
+-        [
+-            {
+-                "Aspect": "Use case",
+-                "Description": "Municipal data-sharing requests assembled from one or more data sources.",
+-            },
+-            {
+-                "Aspect": "Input",
+-                "Description": "A static JSON blueprint containing nodes, connections, and declared evidence.",
+-            },
+-            {
+-                "Aspect": "Policy engine",
 -                "Description": "OPA evaluates six TK/MUNDAT Rego rules independently of the Streamlit interface.",
-+                "Description": "OPA evaluates three TK/MUNDAT Rego rules independently of the Streamlit interface.",
-             },
-             {
-                 "Aspect": "Output",
+-            },
+-            {
+-                "Aspect": "Output",
 -                "Description": "Rule-level PASS, FAIL, or HUMAN results with evidence, reasons, and remedies.",
-+                "Description": "One result per rule (" + ", ".join(STATUSES) + ") with evidence, reason, and remedy.",
-             },
-         ]
-     ),
-@@ -53,6 +55,7 @@ st.dataframe(
-             ("request", "Request intake"),
-             ("classify_request", "Request and data classification"),
-             ("dpia_check", "DPIA and risk-assessment gate"),
-+            ("metadata_catalog", "Catalogue records for sources and lineage"),
-             ("data sources", "Municipal data sources"),
-             ("extract_data", "Data processing"),
-             ("integrate_dataset", "Data integration and lineage"),
-@@ -70,65 +73,14 @@ st.markdown("#### Active TK policy rules")
- 
- rules = [
-     {
+-            },
+-        ]
+-    ),
+-    use_container_width=True,
+-    hide_index=True,
+-)
+-
+-st.markdown("#### TK/MUNDAT pipeline represented in the PoC")
+-
+-st.dataframe(
+-    pd.DataFrame(
+-        [
+-            ("request", "Request intake"),
+-            ("classify_request", "Request and data classification"),
+-            ("dpia_check", "DPIA and risk-assessment gate"),
+-            ("data sources", "Municipal data sources"),
+-            ("extract_data", "Data processing"),
+-            ("integrate_dataset", "Data integration and lineage"),
+-            ("anonymisation", "Privacy control"),
+-            ("sharing_assessment", "Sharing agreement and recipient approval"),
+-            ("share_dataset", "Encrypted data transfer"),
+-        ],
+-        columns=["Blueprint node or group", "Purpose in the PoC"],
+-    ),
+-    use_container_width=True,
+-    hide_index=True,
+-)
+-
+-st.markdown("#### Active TK policy rules")
+-
+-rules = [
+-    {
 -        "Rule": "TK-001",
 -        "Requirement": "DPIA for elevated-risk processing",
 -        "Applicability": "Personal and special-category data are both declared.",
@@ -1195,26 +2382,121 @@ index 3c9f23d..3407889 100644
 -        "HUMAN": "Not currently returned by this rule.",
 -        "Boundary": "Does not verify runtime operation of the safeguards.",
 -    },
-+        "Rule": rule["id"],
-+        "Requirement": rule["title"],
-+        "Trigger": rule["trigger"],
-+        "Control": rule["control"],
-+        **{status: rule["outcomes"].get(status, "Not produced by this rule.") for status in STATUSES if status != "ERROR"},
-+        "Boundary": rule["boundary"],
-+    }
-+    for rule in RULES
- ]
- 
- st.dataframe(
-@@ -138,7 +90,7 @@ st.dataframe(
- )
- 
- st.caption(
+-]
+-
+-st.dataframe(
+-    pd.DataFrame(rules),
+-    use_container_width=True,
+-    hide_index=True,
+-)
+-
+-st.caption(
 -    "The six rules are operational proxies for the TK/MUNDAT PoC. They do not "
-+    "The three rules are operational proxies for the TK/MUNDAT PoC. They do not "
-     "establish complete GDPR compliance, reproduce the full MUNDAT process, or "
-     "replace legal or organisational judgement."
- )
+-    "establish complete GDPR compliance, reproduce the full MUNDAT process, or "
+-    "replace legal or organisational judgement."
+-)
+diff --git a/pages/validation.py b/pages/validation.py
+new file mode 100644
+index 0000000..b6f2179
+--- /dev/null
++++ b/pages/validation.py
+@@ -0,0 +1,96 @@
++import json
++import subprocess
++
++import streamlit as st
++
++from src import evaluator
++from src.catalog import ACCEPTANCE, DEFECTS, OPEN_QUESTIONS, RULES
++from src.evaluator import evaluate
++from src.scenarios import SCENARIOS, build
++from src.ui import badge, page_header, table
++
++page_header(
++    "Validation",
++    "How do we know the results are correct, and where are the limits?",
++)
++
++# ---------------------------------------------------------------- scenario matrix
++st.subheader("Scenario matrix")
++st.markdown(
++    "Each scenario changes **one fact** in the enriched blueprint (details on "
++    "the Inspect page). The expected status follows from the decision table; "
++    "the observed status is computed live by OPA."
++)
++
++
++@st.cache_data(show_spinner="Evaluating all scenarios with OPA...")
++def run_matrix() -> list[dict]:
++    rows = []
++    for key, label, change, _, expected in SCENARIOS:
++        observed = {r["rule"]: r["status"] for r in evaluate(build(key))}
++        row = {"Scenario": label}
++        for rule in RULES:
++            rid = rule["id"]
++            mark = "✓" if observed.get(rid) == expected[rid] else f"✗ expected {expected[rid]}"
++            row[rid] = f"{badge(observed.get(rid, 'ERROR'))} {mark}"
++        rows.append(row)
++    return rows
++
++
++try:
++    matrix = run_matrix()
++    table(matrix)
++    matched = sum(cell.endswith("✓") for row in matrix for cell in (row[r["id"]] for r in RULES))
++    total = len(matrix) * len(RULES)
++    st.caption(f"{matched}/{total} results match the expected status.")
++except RuntimeError as error:
++    st.error(f"OPA is not available: {error}")
++
++# ---------------------------------------------------------------- unit tests
++st.subheader("Rule tests")
++st.markdown(
++    "Every row of every decision table has at least one `opa test` case, "
++    "including regression tests for the v1 defects below."
++)
++if st.button("Run opa test now"):
++    try:
++        process = subprocess.run(
++            [evaluator._opa_executable(), "test", str(evaluator.POLICY_PATH), "--format=json"],
++            capture_output=True, text=True, timeout=60, check=False,
++        )
++        tests = json.loads(process.stdout or "[]")
++        passed = sum(1 for t in tests if not t.get("fail") and not t.get("error"))
++        (st.success if passed == len(tests) else st.error)(f"{passed}/{len(tests)} Rego tests passed.")
++    except (FileNotFoundError, OSError, json.JSONDecodeError, subprocess.TimeoutExpired) as error:
++        st.error(f"Could not run opa test: {error}")
++
++# ---------------------------------------------------------------- iteration 1 learning
++st.subheader("What iteration 1 revealed")
++st.markdown(
++    "Testing the first rule set (six rules, three statuses) against controlled "
++    "changes exposed five defects. Each one either hid findings or produced a "
++    "confident wrong verdict. They motivated the six-status model."
++)
++table(DEFECTS, columns=["ID", "Defect in v1", "Observed effect", "Fix in v2"])
++
++# ---------------------------------------------------------------- acceptance
++st.subheader("Acceptance criteria")
++table(
++    [{"ID": i, "Criterion": c, "Status": s, "Note": n} for i, c, s, n in ACCEPTANCE],
++)
++st.caption("From the Scope and Evaluation Proposal (30 October 2026).")
++
++# ---------------------------------------------------------------- limits
++st.subheader("Limits of validity")
++for text in [
++    "**PASS is a design-level statement.** It means the blueprint declares the control, not that the pipeline is compliant or that the control works at runtime.",
++    "**Rules are interpretations.** They operationalise TK requirements; they are not validated legal mappings until a domain expert reviews them (AC7).",
++    "**Evidence is declared, not verified.** Every non-structural fact in V2 was added by hand.",
++    "**Raw inLUMEN exports are read literally.** They use `kind`, not `type`, so TK-R2 and TK-R3 return NOT_APPLICABLE on them; an adapter (RQ2) is needed.",
++]:
++    st.markdown(f"- {text}")
++
++# ---------------------------------------------------------------- questions
++st.subheader("Open questions for SINTEF")
++for i, question in enumerate(OPEN_QUESTIONS, 1):
++    st.markdown(f"{i}. {question}")
 diff --git a/policies/tk/TK-001.rego b/policies/tk/TK-001.rego
 deleted file mode 100644
 index b259d07..0000000
@@ -2675,10 +3957,10 @@ index 0000000..adbf93f
 +}
 diff --git a/src/catalog.py b/src/catalog.py
 new file mode 100644
-index 0000000..e23cf9d
+index 0000000..e600b84
 --- /dev/null
 +++ b/src/catalog.py
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,155 @@
 +"""
 +Single source of truth for the rule set and status model shown in the app.
 +
@@ -2707,6 +3989,7 @@ index 0000000..e23cf9d
 +        "id": "TK-R1",
 +        "title": "DPIA and risk-assessment checkpoint",
 +        "replaces": "TK-001, TK-002",
++        "tk_requirement": ("DPIA / risk assessment", "Determine whether processing requires a DPIA and assess risk before relevant processing/sharing."),
 +        "legal_reference": "GDPR Art. 35(1), Art. 35(3)(b), Art. 9",
 +        "evidence_class": "Declared",
 +        "trigger": "A data_source declares contains_special_category_data: true.",
@@ -2728,6 +4011,7 @@ index 0000000..e23cf9d
 +        "id": "TK-R2",
 +        "title": "Lineage record for integrated data",
 +        "replaces": "TK-004",
++        "tk_requirement": ("Traceability", "Document data provenance and processing performed during dataset construction."),
 +        "legal_reference": "GDPR Art. 5(2), Art. 30",
 +        "evidence_class": "Derivable (from inLUMEN runs, future)",
 +        "trigger": "The design contains a data_integration node.",
@@ -2748,6 +4032,7 @@ index 0000000..e23cf9d
 +        "id": "TK-R3",
 +        "title": "Purpose compatibility before sharing",
 +        "replaces": "TK-005",
++        "tk_requirement": ("Lawfulness", "Assess whether requested processing and sharing are legally permissible (here: is the new purpose compatible with the original one?)."),
 +        "legal_reference": "GDPR Art. 5(1)(b), Art. 6(4)",
 +        "evidence_class": "Judgement",
 +        "trigger": "A data_transfer node exists and a data_source declares contains_personal_data: true.",
@@ -2770,6 +4055,66 @@ index 0000000..e23cf9d
 +DROPPED_RULES = [
 +    ("TK-003", "Data-sharing agreement", "Dropped to keep scope small; can return as TK-R4 with the structure of TK-R1."),
 +    ("TK-006", "Complete sharing safeguards", "Dropped: depended on fixed node IDs and repeated checks of other rules."),
++]
++
++
++# Facts the rules read, and where they can come from.
++# Provenance: S = structural (graph), D = derivable from tooling, M = manual
++# declaration, H = human judgement.
++RULE_FACTS = [
++    ("TK-R1", "data_source.contains_special_category_data", "Trigger", "M (future: D from schema/PII detection)"),
++    ("TK-R1", "compliance_gate.dpia_checkpoint_defined", "Control", "M"),
++    ("TK-R1", "compliance_gate.risk_assessment_checkpoint_defined", "Control", "M"),
++    ("TK-R2", "node type data_integration", "Trigger", "S"),
++    ("TK-R2", "data_integration.lineage_record_defined", "Control", "M (future: D from inLUMEN runs)"),
++    ("TK-R3", "node type data_transfer", "Trigger", "S"),
++    ("TK-R3", "data_source.contains_personal_data", "Trigger", "M (future: D from schema/PII detection)"),
++    ("TK-R3", "compliance_gate.purpose_compatibility_declared", "Control", "H (declared, confirmed by an expert)"),
++]
++
++# Defects found in rule set v1 and how v2 fixes them (measured with OPA).
++DEFECTS = [
++    ("D1", "One missing control field made one rule undefined, and with it the whole result list.",
++     "No results at all for V2 with dpia_checkpoint_defined removed.",
++     "UNKNOWN row in every rule; one OPA query per rule; ERROR isolated to the failing rule."),
++    ("D2", "A missing trigger fell into the 'not required' branch.",
++     "False PASS for TK-001 and TK-002 with the special-category flag removed.",
++     "Undetermined trigger gives UNKNOWN; only a trigger declared false gives NOT_APPLICABLE."),
++    ("D3", "TK-005 returned HUMAN as soon as any gate lacked the purpose field.",
++     "HUMAN on V2 for the wrong reason (the DPIA gate, not the sharing gate).",
++     "TK-R3 ignores gates that do not carry the field."),
++    ("D4", "'Not applicable' branches reported PASS with evidence that is not in the blueprint.",
++     "Five vacuous PASS results on the raw inLUMEN export.",
++     "NOT_APPLICABLE or UNKNOWN instead; derived evidence lists only what was examined."),
++    ("D5", "OPA called at a fixed Windows path.",
++     "Not runnable outside one machine.",
++     "OPA_PATH, then PATH, then the old path."),
++]
++
++# PoC acceptance criteria from the Scope and Evaluation Proposal (30 Oct 2026).
++ACCEPTANCE = [
++    ("AC1", "Native inLUMEN export accepted through an adapter; manual enrichment listed separately.", "Open",
++     "No adapter yet. Enrichment is documented on the Case page."),
++    ("AC2", "Policy packs for three use cases without engine changes.", "Open",
++     "One use case (TK). Rules are already isolated from the engine."),
++    ("AC3", "Every finding has rule ID, status, policy-source reference, evidence path, reason, remedy.", "Met",
++     "Enforced by the evaluator's result contract."),
++    ("AC4", "Uniform result semantics; missing information gives UNKNOWN, never PASS.", "Met",
++     "Decision tables plus regression tests for D1 and D2."),
++    ("AC5", "opa test cases for pass, fail, missing and not-applicable per rule.", "Met",
++     "29 Rego tests, at least one per decision-table row."),
++    ("AC6", "Reproducible through Docker and CLI, deterministic output.", "Partial",
++     "Deterministic and runnable via opa eval; no Docker image yet."),
++    ("AC7", "Domain expert review of a policy sample.", "Open",
++     "To be requested from SINTEF / TK."),
++]
++
++OPEN_QUESTIONS = [
++    "Is three rules acceptable for iteration 1, or should TK-003 (data-sharing agreement) return as TK-R4?",
++    "Should a design with special-category data and no compliance gate be FAIL (current) or UNKNOWN?",
++    "Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?",
++    "Who at SINTEF or TK can review the three rules for fidelity (AC7)?",
++    "Any confidentiality restriction on deriving rules from TK documents in a public repository?",
 +]
 diff --git a/src/evaluator.py b/src/evaluator.py
 index a3657c2..3ea52e5 100644
@@ -3073,6 +4418,193 @@ index a3657c2..3ea52e5 100644
 +        results.append(value)
 +
 +    return results
+diff --git a/src/scenarios.py b/src/scenarios.py
+new file mode 100644
+index 0000000..6249396
+--- /dev/null
++++ b/src/scenarios.py
+@@ -0,0 +1,87 @@
++"""
++Built-in demonstration scenarios.
++
++Each scenario is the enriched V2 blueprint with one controlled change (or the
++raw inLUMEN export). Together they exercise every non-ERROR status, and the
++expected results make the demonstration a live regression check.
++"""
++
++import copy
++import json
++from pathlib import Path
++
++V2_PATH = Path("data/tk_mundat_data_sharing_v2.json")
++RAW_PATH = Path("tk-uc/inlumen-tk-uc.json")
++
++
++def _load(path: Path) -> dict:
++    return json.loads(path.read_text(encoding="utf-8"))
++
++
++def _node(blueprint: dict, node_id: str) -> dict:
++    return next(n for n in blueprint["pipeline"]["nodes"] if n["id"] == node_id)
++
++
++def _v2() -> dict:
++    return _load(V2_PATH)
++
++
++def _control_false() -> dict:
++    bp = _v2()
++    _node(bp, "dpia_check")["properties"]["dpia_checkpoint_defined"] = False
++    return bp
++
++
++def _control_removed() -> dict:
++    bp = _v2()
++    del _node(bp, "dpia_check")["properties"]["dpia_checkpoint_defined"]
++    return bp
++
++
++def _trigger_removed() -> dict:
++    bp = _v2()
++    for node_id in ("health_services", "citizen_registry"):
++        del _node(bp, node_id)["properties"]["contains_special_category_data"]
++    return bp
++
++
++def _no_sensitive_data() -> dict:
++    bp = _v2()
++    _node(bp, "health_services")["properties"]["contains_special_category_data"] = False
++    return bp
++
++
++def _purpose_not_assessed() -> dict:
++    bp = _v2()
++    _node(bp, "sharing_assessment")["properties"]["purpose_compatibility_declared"] = False
++    return bp
++
++
++def _raw_export() -> dict:
++    return _load(RAW_PATH)
++
++
++# (key, label, change made, builder, expected statuses)
++SCENARIOS = [
++    ("v2", "S0 · Enriched blueprint (V2)", "None. The manually enriched TK/MUNDAT blueprint.",
++     _v2, {"TK-R1": "PASS", "TK-R2": "PASS", "TK-R3": "HUMAN"}),
++    ("control_false", "S1 · DPIA checkpoint declared false", "dpia_check.dpia_checkpoint_defined: true → false",
++     _control_false, {"TK-R1": "FAIL", "TK-R2": "PASS", "TK-R3": "HUMAN"}),
++    ("control_removed", "S2 · DPIA checkpoint field removed", "dpia_check.dpia_checkpoint_defined deleted",
++     _control_removed, {"TK-R1": "UNKNOWN", "TK-R2": "PASS", "TK-R3": "HUMAN"}),
++    ("trigger_removed", "S3 · Special-category flag removed", "contains_special_category_data deleted on both sources",
++     _trigger_removed, {"TK-R1": "UNKNOWN", "TK-R2": "PASS", "TK-R3": "HUMAN"}),
++    ("no_sensitive", "S4 · No special-category data", "health_services.contains_special_category_data: true → false",
++     _no_sensitive_data, {"TK-R1": "NOT_APPLICABLE", "TK-R2": "PASS", "TK-R3": "HUMAN"}),
++    ("purpose_false", "S5 · Purpose compatibility declared false", "sharing_assessment.purpose_compatibility_declared: true → false",
++     _purpose_not_assessed, {"TK-R1": "PASS", "TK-R2": "PASS", "TK-R3": "FAIL"}),
++    ("raw", "S6 · Raw inLUMEN export (not enriched)", "None. The original inLUMEN export without compliance metadata.",
++     _raw_export, {"TK-R1": "UNKNOWN", "TK-R2": "NOT_APPLICABLE", "TK-R3": "NOT_APPLICABLE"}),
++]
++
++
++def build(key: str) -> dict:
++    for k, _label, _change, builder, _expected in SCENARIOS:
++        if k == key:
++            return copy.deepcopy(builder())
++    raise KeyError(key)
+diff --git a/src/ui.py b/src/ui.py
+new file mode 100644
+index 0000000..54ab9b7
+--- /dev/null
++++ b/src/ui.py
+@@ -0,0 +1,88 @@
++"""Shared UI helpers for the InspectR pages."""
++
++import json
++
++import pandas as pd
++import streamlit as st
++
++from src.catalog import STATUS_ICON, STATUSES
++
++
++def page_header(title: str, question: str) -> None:
++    """Every page opens with its title and the one question it answers."""
++    st.title(title)
++    st.caption(question)
++
++
++def badge(status: str) -> str:
++    return f"{STATUS_ICON.get(status, '⚪')} {status}"
++
++
++def as_text(value) -> str:
++    """Evidence values mix booleans, strings and lists; show them as JSON text."""
++    return value if isinstance(value, str) else json.dumps(value)
++
++
++def table(rows, columns=None, height=None) -> None:
++    frame = pd.DataFrame(rows, columns=columns) if columns else pd.DataFrame(rows)
++    kwargs = {"use_container_width": True, "hide_index": True}
++    if height:
++        kwargs["height"] = height
++    st.dataframe(frame, **kwargs)
++
++
++def render_evidence(evidence: dict) -> None:
++    rows = [
++        {
++            "Blueprint selector": item.get("selector"),
++            "Observed": as_text(item.get("observed")),
++            "Expected": as_text(item.get("expected")),
++            "Condition": item.get("condition"),
++        }
++        for item in evidence.get("input_evidence", [])
++    ]
++    if rows:
++        st.caption("Input evidence: what OPA read from the blueprint")
++        st.dataframe(
++            pd.DataFrame(rows),
++            use_container_width=True,
++            hide_index=True,
++            column_config={
++                "Blueprint selector": st.column_config.TextColumn(width="large"),
++                "Observed": st.column_config.TextColumn(width="small"),
++                "Expected": st.column_config.TextColumn(width="small"),
++                "Condition": st.column_config.TextColumn(width="large"),
++            },
++        )
++    derived = evidence.get("derived_evidence")
++    if derived:
++        st.caption("Derived evidence: what Rego concluded from the input")
++        st.json(derived, expanded=False)
++
++
++def render_summary(results: list[dict]) -> None:
++    counts = {status: 0 for status in STATUSES}
++    for result in results:
++        counts[result["status"]] = counts.get(result["status"], 0) + 1
++    for column, status in zip(st.columns(len(STATUSES)), STATUSES):
++        column.metric(badge(status).replace("_", " "), counts[status])
++
++
++def render_results(results: list[dict], expected: dict | None = None) -> None:
++    render_summary(results)
++    for result in results:
++        rule, status = result["rule"], result["status"]
++        check = ""
++        if expected and rule in expected:
++            check = "  ✓ as expected" if expected[rule] == status else f"  ✗ expected {expected[rule]}"
++        title = f" · {result['title']}" if result.get("title") else ""
++        with st.expander(f"{badge(status)} — {rule}{title}{check}"):
++            row = result.get("decision_row")
++            st.caption(
++                f"{result['legal_reference']}"
++                + (f" · decision-table row {row}" if row is not None else "")
++            )
++            st.markdown(result["reason"])
++            render_evidence(result["evidence"])
++            if result["remedy"]:
++                st.info(f"**Remedy:** {result['remedy']}")
 diff --git a/tests/conftest.py b/tests/conftest.py
 new file mode 100644
 index 0000000..5801bea
@@ -3085,10 +4617,10 @@ index 0000000..5801bea
 +sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 diff --git a/tests/test_evaluator.py b/tests/test_evaluator.py
 new file mode 100644
-index 0000000..deb53ab
+index 0000000..e2e606e
 --- /dev/null
 +++ b/tests/test_evaluator.py
-@@ -0,0 +1,99 @@
+@@ -0,0 +1,107 @@
 +"""Evaluator tests: real blueprints, input errors and per-rule ERROR isolation.
 +Run from the repo root: OPA_PATH=/path/to/opa pytest tests -v
 +"""
@@ -3188,6 +4720,14 @@ index 0000000..deb53ab
 +    from src.catalog import RULES
 +    taxonomy = json.loads((ROOT / "data/inspectr_taxonomy.json").read_text(encoding="utf-8"))
 +    assert [c["rule_id"] for c in taxonomy["children"]] == [r["id"] for r in RULES]
++
++
++@pytest.mark.parametrize("scenario", [s[0] for s in __import__("src.scenarios", fromlist=["SCENARIOS"]).SCENARIOS])
++def test_demo_scenarios_match_expected(scenario):
++    """The scenarios shown on the Inspect and Validation pages."""
++    from src.scenarios import SCENARIOS, build
++    expected = next(s[4] for s in SCENARIOS if s[0] == scenario)
++    assert statuses(evaluate(build(scenario))) == expected
 diff --git a/tk-uc/stat.md b/tk-uc/stat.md
 index d657f11..2cdc64a 100644
 --- a/tk-uc/stat.md

@@ -97,3 +97,11 @@ def test_taxonomy_matches_catalog():
     from src.catalog import RULES
     taxonomy = json.loads((ROOT / "data/inspectr_taxonomy.json").read_text(encoding="utf-8"))
     assert [c["rule_id"] for c in taxonomy["children"]] == [r["id"] for r in RULES]
+
+
+@pytest.mark.parametrize("scenario", [s[0] for s in __import__("src.scenarios", fromlist=["SCENARIOS"]).SCENARIOS])
+def test_demo_scenarios_match_expected(scenario):
+    """The scenarios shown on the Inspect and Validation pages."""
+    from src.scenarios import SCENARIOS, build
+    expected = next(s[4] for s in SCENARIOS if s[0] == scenario)
+    assert statuses(evaluate(build(scenario))) == expected
