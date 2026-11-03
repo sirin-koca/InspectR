@@ -1,9 +1,5 @@
-import json
-import subprocess
-
 import streamlit as st
 
-from src import evaluator
 from src.catalog import ACCEPTANCE, DEFECTS, OPEN_QUESTIONS, RULES
 from src.evaluator import evaluate
 from src.scenarios import SCENARIOS, build
@@ -46,12 +42,20 @@ try:
 except RuntimeError as error:
     st.error(f"OPA is not available: {error}")
 
+# ---------------------------------------------------------------- unit tests
+st.subheader("Rule tests")
+st.markdown(
+    "Every row of every decision table has at least one `opa test` case, "
+    "including regression tests for the v1 defects below (29 Rego unit tests). "
+    "20 pytest integration tests run the evaluator against real OPA."
+)
 
+# ---------------------------------------------------------------- iteration 1 learning
 st.subheader("What iteration 1 revealed")
 st.markdown(
-    "Testing the first rule set (six rules, three statuses) against controlled "
-    "changes exposed five defects. Each one either hid findings or produced a "
-    "confident wrong verdict. They motivated the six-status model."
+    "Testing rule set v1 (six rules TK-001 to TK-006; statuses PASS, FAIL, HUMAN) "
+    "against controlled changes exposed five defects. D1–D4 hid findings or gave a "
+    "confident wrong verdict and motivated the six-status model; D5 limited portability."
 )
 table(DEFECTS, columns=["ID", "Defect in v1", "Observed effect", "Fix in v2"])
 
@@ -67,12 +71,12 @@ st.subheader("Limits of validity")
 for text in [
     "**PASS is a design-level statement.** It means the blueprint declares the control, not that the pipeline is compliant or that the control works at runtime.",
     "**Rules are interpretations.** They operationalise TK requirements; they are not validated legal mappings until a domain expert reviews them (AC7).",
-    "**Evidence is declared, not verified.** Every non-structural fact in V2 was added by hand.",
-    "**Raw inLUMEN exports are read literally.** They use `kind`, not `type`, so TK-R2 and TK-R3 return NOT_APPLICABLE on them; an adapter (RQ2) is needed.",
+    "**Facts are declarations, not proof.** The compliance facts in the enriched blueprint were added by hand. InspectR checks that the design declares a control, not that the control exists or is carried out.",
+    "**Raw inLUMEN exports are read literally.** They use `kind`, not `type`, so TK-R2 and TK-R3 return NOT_APPLICABLE on them (scenario S6); an adapter (RQ2) is needed.",
 ]:
     st.markdown(f"- {text}")
 
 # ---------------------------------------------------------------- questions
-st.subheader("Open questions for SINTEF")
+st.subheader("Open questions")
 for i, question in enumerate(OPEN_QUESTIONS, 1):
     st.markdown(f"{i}. {question}")

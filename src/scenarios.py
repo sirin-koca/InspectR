@@ -1,7 +1,7 @@
 """
 Built-in demonstration scenarios.
 
-Each scenario is the enriched V2 blueprint with one controlled change (or the
+Each scenario is the enriched blueprint with one controlled change (or the
 raw inLUMEN export). Together they exercise every non-ERROR status, and the
 expected results make the demonstration a live regression check.
 """
@@ -63,7 +63,7 @@ def _raw_export() -> dict:
 
 # (key, label, change made, builder, expected statuses)
 SCENARIOS = [
-    ("v2", "S0 · Enriched blueprint (V2)", "None. The manually enriched TK/MUNDAT blueprint.",
+    ("v2", "S0 · Enriched blueprint", "None. The TK/MUNDAT blueprint with compliance facts added by hand.",
      _v2, {"TK-R1": "PASS", "TK-R2": "PASS", "TK-R3": "HUMAN"}),
     ("control_false", "S1 · DPIA checkpoint declared false", "dpia_check.dpia_checkpoint_defined: true → false",
      _control_false, {"TK-R1": "FAIL", "TK-R2": "PASS", "TK-R3": "HUMAN"}),

@@ -28,7 +28,7 @@ KEY_WORKS = [
      "https://link.springer.com/chapter/10.1007/978-3-031-77847-6_10",
      "W3C vocabulary for machine-readable descriptions of personal-data processing, including GDPR concepts.",
      "A vocabulary, not a checking method.",
-     "Candidate vocabulary for the evidence model (RQ1); DataPACT's ODRL/DPV tools already use it."),
+     "Candidate vocabulary for the evidence model (RQ1); DataPACT maintains an ODRL-DPV ontology."),
     ("W5", "Vanezi et al., 2026 (SLR, arXiv)",
      "https://arxiv.org/html/2604.16361",
      "Systematic review of modelling GDPR requirements with software-engineering diagrams.",
@@ -50,7 +50,7 @@ KEY_WORKS = [
      "Origin of the design-time pipeline models that InspectR inspects."),
     ("W8", "LexAlign, SINTEF (DataPACT)",
      "https://www.sintef.no/en/software/lexalign/",
-     "Compliance workspace: regulations as executable decision flows; assesses evidence from SIM-PIPE dry runs.",
+     "Compliance workspace: regulations as executable decision flows; assesses evidence from SIM-PIPE pipeline dry runs.",
      "Proving that derived obligations are fulfilled “relies on manually gathering evidence” "
      "([SINTEF](https://www.sintef.no/en/digital/master-students/agent-based-controls-for-verifying-regulatory-compliance/)).",
      "Complementary: LexAlign derives which obligations apply; InspectR checks whether the design declares the controls."),
@@ -108,11 +108,11 @@ SUB_QUESTIONS = [
 CONTRIBUTIONS = [
     ("C1", "Evidence model for compliance-inspectable pipeline blueprints, with fact provenance classes and a measured "
            "tooling gap (native export vs. enriched blueprint).",
-     "Design knowledge", "G2, G5", "RQ1", "TK fact inventory; raw vs. V2 comparison"),
+     "Design knowledge", "G2, G5", "RQ1", "TK fact inventory; raw export vs. enriched blueprint"),
     ("C2", "Reference architecture: intermediate representation, tool adapters, policy packs and a uniform result contract.",
-     "Artefact", "G1, G3", "RQ2", "Result contract and per-rule evaluation; IR and adapters not yet built"),
+     "Artefact", "G1, G3", "RQ2", "Result contract and per-rule evaluation; intermediate representation and adapters not yet built"),
     ("C3", "Result semantics for design-time inspection under incomplete evidence (six statuses, fail-safe default).",
-     "Design knowledge", "G7, G5", "RQ2", "Status model; D1–D4 removed; 21/21 scenario matrix"),
+     "Design knowledge", "G7, G5", "RQ2", "Status model; D1–D4 removed; 21/21 scenario results as expected"),
     ("C4", "Traceable rule pattern: requirement → IF trigger THEN control → decision table → tests.",
      "Method", "G4, G6", "RQ2, RQ3", "TK-R1–R3; 29 Rego and 20 integration tests"),
     ("C5", "Evaluation of design-time inspection against expert review across use cases, with seeded defects and an ablation.",

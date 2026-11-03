@@ -74,7 +74,7 @@ The **Sickleave** scenario (DataPACT D5.1 §3.7) assembles a research dataset fr
 | `tk-uc/inlumen-tk-uc.json` | Raw inLUMEN export: 7 nodes, generic `kind` (source, task, destination), empty `parameters`. | Shows what tooling exports today. |
 | `data/tk_mundat_data_sharing_v2.json` | Enriched blueprint: 11 typed nodes, 13 connections, compliance facts added manually. | Evaluation input. |
 
-The difference between the two is a research finding (RQ1): it measures the gap between what pipeline tooling exports and what inspection needs. Source names, schemas and configuration values in V2 are illustrative modelling assumptions, not confirmed municipal system details.
+The difference between the two measures the gap between what pipeline tooling exports and what inspection needs. Source names, schemas and configuration values in the enriched blueprint are illustrative modelling assumptions, not confirmed municipal system details.
 
 ## Architecture
 
@@ -92,17 +92,18 @@ flowchart LR
 | `src/evaluator.py` | Validates input, queries each rule separately, validates results, isolates failures as ERROR. |
 | `src/catalog.py` | Single source of truth for rules, statuses and descriptions shown in the app. |
 | `src/scenarios.py` | Controlled scenarios S0–S6 with expected statuses. |
-| `app.py`, `pages/` | Streamlit app: Overview, Method, Case, Inspect, Validation. |
+| `src/research_content.py` | Content of the Research page: key works, gaps, RQs, candidate contributions, metrics, directions. |
+| `app.py`, `pages/` | Streamlit app: Overview, Research, Method, Case, Inspect, Validation. |
 
 Every result carries `rule`, `status`, `legal_reference`, `reason`, `evidence`, `remedy`. A failing rule returns ERROR while the other results are kept. Planned (RQ2): an intermediate representation with adapters, so native tool exports can be inspected without manual enrichment.
 
 ## Validation
 
-**Scenario matrix.** Each scenario changes one fact in V2; the expected status follows from the decision table. All 21 results match.
+**Scenario matrix.** Each scenario changes one fact in the enriched blueprint; the expected status follows from the decision table. All 21 results match.
 
 | Scenario | TK-R1 | TK-R2 | TK-R3 |
 |---|---|---|---|
-| S0 · Enriched blueprint (V2) | PASS | PASS | HUMAN |
+| S0 · Enriched blueprint | PASS | PASS | HUMAN |
 | S1 · DPIA checkpoint declared false | FAIL | PASS | HUMAN |
 | S2 · DPIA checkpoint field removed | UNKNOWN | PASS | HUMAN |
 | S3 · Special-category flag removed | UNKNOWN | PASS | HUMAN |
@@ -144,6 +145,7 @@ The rules are unreviewed interpretations; legal references are not validated map
 2. Should a design with special-category data and no compliance gate be FAIL (current) or UNKNOWN?
 3. Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?
 4. Who at SINTEF or TK can review the three rules for fidelity (AC7)?
+5. Is there any confidentiality restriction on deriving rules from TK documents in a public repository?
 
 ## Running
 
@@ -168,9 +170,9 @@ Run from the repository root; paths are relative.
 
 ```text
 app.py                     Navigation
-pages/                     overview, method, case, inspection, validation
+pages/                     overview, research, method, case, inspection, validation
 pages/archive/             Pre-v2 pages (not in navigation)
-src/                       evaluator, catalog, scenarios, ui
+src/                       evaluator, catalog, scenarios, research_content, ui
 policies/tk/               lib.rego, policy.rego, TK-R1..R3.rego, tests/
 tests/                     pytest integration tests
 data/                      Raw inLUMEN exports, enriched blueprints, taxonomy

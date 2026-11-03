@@ -1,4 +1,5 @@
 import streamlit as st
+from src.catalog import GLOSSARY
 
 # --------------------------------------------------
 # APP CONFIGURATION
@@ -31,12 +32,18 @@ st.markdown(
         padding-bottom: 1rem !important;
     }
 
-    /* 3. Custom reusable class for markdown background fields */
-    .custom-card {
-        background-color: #f0f2f6; 
-        padding: 15px; 
-        border-radius: 8px; 
-        color: #31333F;
+    /* 3. Overview hero and status chips */
+    .hero {
+        background: linear-gradient(120deg, #142744 0%, #2B4A7A 100%);
+        color: #FFFFFF; padding: 28px 32px; border-radius: 12px; margin: 8px 0 18px 0;
+    }
+    .hero-kicker { font-size: 0.85rem; opacity: 0.8; letter-spacing: 0.02em; }
+    .hero-title  { font-size: 2.6rem; font-weight: 700; line-height: 1.2; margin: 4px 0 6px 0; }
+    .hero-lead   { font-size: 1.15rem; max-width: 52rem; line-height: 1.5; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .chip {
+        background: #F0F2F6; border: 1px solid #D5DBE5; border-radius: 999px;
+        padding: 4px 12px; font-size: 0.9rem; color: #31333F;
     }
     </style>
     """,
@@ -78,7 +85,11 @@ st.sidebar.image(
     "images/uio.png",
     width=145,
 )
-st.sidebar.caption("InspectR · iteration 1 · rule set tk-v2.0")
+st.sidebar.caption("InspectR PoC · iteration 1  \nRule set tk‑v2.0")
+
+
+with st.sidebar.expander("Terms and acronyms"):
+    st.markdown("\n\n".join(f"**{term}**: {text}" for term, text in GLOSSARY))
 
 # --------------------------------------------------
 # RUN SELECTED PAGE

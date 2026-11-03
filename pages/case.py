@@ -12,18 +12,21 @@ page_header(
 )
 
 st.markdown(
-    "Trondheim Kommune (TK) receives requests from researchers and companies for "
-    "municipal data. The **Sickleave** scenario assembles a research dataset from "
-    "health-services and citizen-registry sources, integrates and anonymises it, "
-    "and shares it with an external recipient. It involves special-category "
-    "health data, integration of sources, and sharing for a new purpose."
+    "Trondheim Kommune (TK), the municipality of Trondheim, is the MUNDAT use case "
+    "in the EU project DataPACT. The **Sickleave** scenario (DataPACT D5.1 §3.7) "
+    "assembles a research dataset from health-services and citizen-registry sources, "
+    "integrates and anonymises it, and shares it for a new purpose. It involves "
+    "special-category health data. The raw blueprint is an export from inLUMEN, "
+    "DataPACT's pipeline design editor. Source names, schemas and values in the "
+    "enriched blueprint are illustrative modelling assumptions, not confirmed "
+    "municipal system details."
 )
 
 V2 = json.loads(Path("data/tk_mundat_data_sharing_v2.json").read_text(encoding="utf-8"))
 RAW = json.loads(Path("tk-uc/inlumen-tk-uc.json").read_text(encoding="utf-8"))
 
 # ---------------------------------------------------------------- pipeline
-st.subheader("Pipeline design (enriched blueprint V2)")
+st.subheader("Pipeline design (enriched blueprint)")
 FILL = {
     "compliance_gate": "#FFE3B3",
     "data_source": "#D9E5F4",
@@ -67,15 +70,15 @@ with left.container(border=True):
         "Every `parameters` field is empty. None of the facts the rules need is present."
     )
 with right.container(border=True):
-    st.markdown("**Enriched blueprint (V2)**")
+    st.markdown("**Enriched blueprint**")
     st.write(
         f"{len(V2['pipeline']['nodes'])} typed nodes and "
         f"{len(V2['pipeline']['connections'])} connections. Compliance facts were "
         "added **manually** so the rules have evidence to read."
     )
 st.markdown(
-    "The enrichment is a research finding, not a workaround: it measures the gap "
-    "between what pipeline tooling exports and what inspection needs (RQ1)."
+    "The difference between the two measures the gap between what pipeline "
+    "tooling exports and what inspection needs (RQ1)."
 )
 table(
     [{"Rule": r, "Fact": f, "Role": role, "Provenance": p} for r, f, role, p in RULE_FACTS],
@@ -93,17 +96,17 @@ table(
         {
             "Rule": r["id"],
             "Title": r["title"],
+            "Replaces (v1)": r["replaces"],
             "TK requirement": r["tk_requirement"][0],
             "Legal basis": r["legal_reference"],
-            "Evidence class": r["evidence_class"],
             "Statuses": ", ".join(r["outcomes"]),
         }
         for r in RULES
     ]
 )
 st.caption(
-    "Three rules, one per evidence class (declared, derivable, judgement): together "
-    "they exercise every status and can be tested exhaustively."
+    "The three rules cover three kinds of control evidence (M, M → D, H; see the "
+    "table above) and reach every status except ERROR, which signals a tool failure."
 )
-with st.expander("Rules dropped from iteration 1"):
+with st.expander("v1 rules not carried into v2"):
     table(DROPPED_RULES, columns=["Rule", "Requirement", "Reason"])

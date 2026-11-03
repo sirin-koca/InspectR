@@ -36,7 +36,7 @@ if choice == UPLOAD:
 else:
     key, change, expected = by_label[choice]
     blueprint = build(key)
-    st.caption(f"**Change from V2:** {change}")
+    st.caption(f"**Change from the enriched blueprint:** {change}")
 
 if blueprint is not None:
     try:

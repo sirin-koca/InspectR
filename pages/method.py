@@ -13,10 +13,10 @@ st.subheader("From requirement to verdict")
 for column, (step, text) in zip(
     st.columns(5),
     [
-        ("1 · Requirement", "What the TK documents and the law demand, in words."),
+        ("1 · Requirement", "What the law and the organisation (here Trondheim Kommune, TK) demand, in words."),
         ("2 · Rule", "The requirement scoped as IF trigger THEN control."),
         ("3 · Facts", "The blueprint fields the rule reads: true, false or undetermined."),
-        ("4 · Evaluation", "OPA applies the rule's decision table to the facts."),
+        ("4 · Evaluation", "The policy engine OPA applies the rule's decision table to the facts."),
         ("5 · Result", "One status, with reason, evidence and remedy."),
     ],
 ):
@@ -49,7 +49,7 @@ table(
 # ---------------------------------------------------------------- worked example
 st.subheader("Worked example: TK-R1")
 r1 = RULES[0]
-steps = st.tabs(["1 · Requirement", "2 · Rule", "3 · Rego", "4 · Facts in V2", "5 · Result"])
+steps = st.tabs(["1 · Requirement", "2 · Rule", "3 · Rego", "4 · Facts", "5 · Result"])
 with steps[0]:
     st.markdown(f"**TK need ({r1['tk_requirement'][0]}):** “{r1['tk_requirement'][1]}”")
     st.caption(f"Legal basis: {r1['legal_reference']}")
@@ -92,7 +92,7 @@ with steps[3]:
         ],
         columns=["Node", "Field", "Value", "Role"],
     )
-    st.caption("These fields were added to the blueprint manually; inLUMEN does not export them (see Case).")
+    st.caption("Fields of the enriched blueprint. They were added by hand; the design tool inLUMEN does not export them (see Case).")
 with steps[4]:
     st.success(
         "**🟢 PASS · decision-table row 5.** Special-category data is processed and gate "
@@ -116,7 +116,7 @@ with st.expander("Definitions"):
             ("Status", "The outcome of one rule for one blueprint."),
             ("Result", "Status plus reason, evidence, legal reference and remedy."),
             ("Design-time", "Checked on the blueprint before the pipeline is built or run."),
-            ("Fail-closed", "Undetermined evidence never becomes PASS."),
+            ("Fail-safe default", "Without valid evidence the result is never PASS."),
         ],
         columns=["Term", "Definition"],
     )
@@ -124,12 +124,12 @@ with st.expander("Definitions"):
 with st.expander("Design decisions and justification"):
     table(
         [
-            ("Rule = IF trigger THEN control", "Legal obligations are conditional.", "Compliance-by-design (Governatori; LegalRuleML)"),
+            ("Rule = IF trigger THEN control", "Legal obligations are conditional.", "Compliance by design (Governatori); LegalRuleML (OASIS)"),
             ("Three fact values", "Forcing an undetermined fact into true or false invents information.", "Three-valued logic"),
-            ("Undetermined → UNKNOWN, never PASS", "A false PASS hides a risk.", "Fail-closed principle"),
-            ("NOT_APPLICABLE as own status", "'Does not apply' differs from 'satisfied'.", "AWS Config; SARIF"),
-            ("HUMAN as own status", "Some requirements are legal judgements.", "SARIF 'review'"),
-            ("ERROR separate from verdicts", "A tool failure says nothing about the blueprint.", "Kyverno 'error'"),
+            ("Undetermined → UNKNOWN, never PASS", "A false PASS hides a risk.", "Fail-safe defaults (Saltzer & Schroeder, 1975)"),
+            ("NOT_APPLICABLE as own status", "'Does not apply' differs from 'satisfied'.", "AWS Config NOT_APPLICABLE; SARIF notApplicable"),
+            ("HUMAN as own status", "Some requirements are legal judgements.", "SARIF review"),
+            ("ERROR separate from verdicts", "A tool failure says nothing about the blueprint.", "Kyverno error"),
             ("Evidence in every result", "A verdict without evidence cannot be audited.", "GDPR Art. 5(2)"),
             ("Each rule evaluated in isolation", "One fault must not suppress other results.", "Fault isolation"),
             ("Each rule a complete decision table", "Every input reaches exactly one status; one test per row.", "Decision-table testing"),

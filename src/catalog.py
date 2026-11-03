@@ -12,7 +12,7 @@ RULE_SET_VERSION = "tk-v2.0"
 STATUS_MODEL = [
     ("PASS", "🟢", "The obligation applies and the blueprint declares every required control as true.", "Nobody (design level only)"),
     ("FAIL", "🔴", "The obligation applies and the blueprint declares a required control as false.", "Designer: add the control"),
-    ("UNKNOWN", "🟡", "A fact the rule needs is undetermined: absent, null, or not a boolean.", "Designer or inLUMEN: supply the fact"),
+    ("UNKNOWN", "🟡", "A fact the rule needs is undetermined: absent, null, or not a boolean.", "Designer: supply the fact"),
     ("HUMAN", "🟠", "Everything checkable is declared, but the final decision is a legal judgement.", "Legal or domain expert"),
     ("NOT_APPLICABLE", "⚪", "The trigger facts are declared false, so the obligation does not apply.", "Nobody"),
     ("ERROR", "⛔", "InspectR could not evaluate the rule. Not a finding about the blueprint.", "InspectR developer"),
@@ -28,7 +28,6 @@ RULES = [
         "replaces": "TK-001, TK-002",
         "tk_requirement": ("DPIA / risk assessment", "Determine whether processing requires a DPIA and assess risk before relevant processing/sharing."),
         "legal_reference": "GDPR Art. 35(1), Art. 35(3)(b), Art. 9",
-        "evidence_class": "Declared",
         "trigger": "A data_source declares contains_special_category_data: true.",
         "control": "One compliance_gate declares dpia_checkpoint_defined: true and risk_assessment_checkpoint_defined: true.",
         "selectors": [
@@ -50,7 +49,6 @@ RULES = [
         "replaces": "TK-004",
         "tk_requirement": ("Traceability", "Document data provenance and processing performed during dataset construction."),
         "legal_reference": "GDPR Art. 5(2), Art. 30",
-        "evidence_class": "Derivable (from inLUMEN runs, future)",
         "trigger": "The design contains a data_integration node.",
         "control": "Every data_integration node declares lineage_record_defined: true.",
         "selectors": [
@@ -71,7 +69,6 @@ RULES = [
         "replaces": "TK-005",
         "tk_requirement": ("Lawfulness", "Assess whether requested processing and sharing are legally permissible (here: is the new purpose compatible with the original one?)."),
         "legal_reference": "GDPR Art. 5(1)(b), Art. 6(4)",
-        "evidence_class": "Judgement",
         "trigger": "A data_transfer node exists and a data_source declares contains_personal_data: true.",
         "control": "The compliance gates that carry purpose_compatibility_declared all declare true.",
         "selectors": [
@@ -112,13 +109,13 @@ RULE_FACTS = [
 # Defects found in rule set v1 and how v2 fixes them (measured with OPA).
 DEFECTS = [
     ("D1", "One missing control field made one rule undefined, and with it the whole result list.",
-     "No results at all for V2 with dpia_checkpoint_defined removed.",
+     "No results at all for the enriched blueprint with dpia_checkpoint_defined removed.",
      "UNKNOWN row in every rule; one OPA query per rule; ERROR isolated to the failing rule."),
     ("D2", "A missing trigger fell into the 'not required' branch.",
      "False PASS for TK-001 and TK-002 with the special-category flag removed.",
      "Undetermined trigger gives UNKNOWN; only a trigger declared false gives NOT_APPLICABLE."),
-    ("D3", "TK-005 returned HUMAN as soon as any gate lacked the purpose field.",
-     "HUMAN on V2 for the wrong reason (the DPIA gate, not the sharing gate).",
+    ("D3", "v1 rule TK-005 returned HUMAN as soon as any gate lacked the purpose field.",
+     "HUMAN on the enriched blueprint for the wrong reason (the DPIA gate, not the sharing gate).",
      "TK-R3 ignores gates that do not carry the field."),
     ("D4", "'Not applicable' branches reported PASS with evidence that is not in the blueprint.",
      "Five vacuous PASS results on the raw inLUMEN export.",
@@ -152,4 +149,28 @@ OPEN_QUESTIONS = [
     "Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?",
     "Who at SINTEF or TK can review the three rules for fidelity (AC7)?",
     "Any confidentiality restriction on deriving rules from TK documents in a public repository?",
+]
+
+
+# Terms and acronyms used across the app (one definition each).
+GLOSSARY = [
+    ("Blueprint", "Machine-readable JSON description of a planned pipeline: nodes, connections, properties."),
+    ("Enriched blueprint", "The TK/MUNDAT inLUMEN blueprint with compliance facts added by hand."),
+    ("DataPACT", "Horizon Europe project on compliance by design of data/AI pipelines, coordinated by SINTEF (2025–2027)."),
+    ("TK / MUNDAT", "Trondheim Kommune (municipality) and its DataPACT use case on sharing municipal data (MUNDAT)."),
+    ("inLUMEN", "DataPACT pipeline design editor; exports pipeline blueprints as JSON."),
+    ("LexAlign", "SINTEF compliance workspace that derives which legal obligations apply to a pipeline."),
+    ("SIM-PIPE", "SINTEF tool that simulates (dry-runs) data pipelines."),
+    ("Policy-as-Code (PaC)", "Rules written as executable code and checked automatically."),
+    ("OPA / Rego", "Open Policy Agent, an open-source policy engine, and its rule language."),
+    ("GDPR", "EU General Data Protection Regulation (2016/679)."),
+    ("DPIA", "Data Protection Impact Assessment, required by GDPR Art. 35 for high-risk processing."),
+    ("Special-category data", "Personal data such as health data, given extra protection by GDPR Art. 9."),
+    ("DPV / ODRL", "W3C vocabularies for describing personal-data processing (DPV) and usage policies (ODRL)."),
+    ("SARIF", "OASIS standard format for static-analysis results; has result kinds pass, fail, review, notApplicable."),
+    ("AWS Config / Kyverno", "Cloud and Kubernetes compliance checkers; their result types include NOT_APPLICABLE and error."),
+    ("DSR", "Design Science Research: build an artefact, evaluate it, iterate (Hevner et al., 2004)."),
+    ("PoC", "Proof of concept: the current InspectR prototype (iteration 1)."),
+    ("S / D / M / H", "Fact provenance: structural (from the graph), derivable from tooling, manual declaration, human judgement."),
+    ("Fail-safe default", "Without valid evidence the result is never PASS (Saltzer & Schroeder, 1975)."),
 ]
