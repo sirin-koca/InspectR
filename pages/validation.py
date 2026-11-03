@@ -46,25 +46,7 @@ try:
 except RuntimeError as error:
     st.error(f"OPA is not available: {error}")
 
-# ---------------------------------------------------------------- unit tests
-st.subheader("Rule tests")
-st.markdown(
-    "Every row of every decision table has at least one `opa test` case, "
-    "including regression tests for the v1 defects below."
-)
-if st.button("Run opa test now"):
-    try:
-        process = subprocess.run(
-            [evaluator._opa_executable(), "test", str(evaluator.POLICY_PATH), "--format=json"],
-            capture_output=True, text=True, timeout=60, check=False,
-        )
-        tests = json.loads(process.stdout or "[]")
-        passed = sum(1 for t in tests if not t.get("fail") and not t.get("error"))
-        (st.success if passed == len(tests) else st.error)(f"{passed}/{len(tests)} Rego tests passed.")
-    except (FileNotFoundError, OSError, json.JSONDecodeError, subprocess.TimeoutExpired) as error:
-        st.error(f"Could not run opa test: {error}")
 
-# ---------------------------------------------------------------- iteration 1 learning
 st.subheader("What iteration 1 revealed")
 st.markdown(
     "Testing the first rule set (six rules, three statuses) against controlled "
