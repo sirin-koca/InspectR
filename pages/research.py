@@ -25,7 +25,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------- key works
-st.subheader("Key works")
+st.subheader("Litterature review: key works")
 md_table(
     ["ID", "Work", "Offers", "Stated limit or future work", "Relevance to InspectR"],
     [(i, f"[{c}]({u})", o, l, r) for i, c, u, o, l, r in KEY_WORKS],

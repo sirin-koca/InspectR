@@ -10,8 +10,7 @@ st.markdown(
     <div class="hero">
       <div class="hero-kicker">MSc thesis · University of Oslo · DataPACT / SINTEF</div>
       <div class="hero-title">InspectR</div>
-      <div class="hero-lead">Checks a <b>planned</b> data pipeline against compliance rules
-      <b>before it is built</b>, and returns one traceable result per rule.</div>
+      <div class="hero-lead">Compliance-by-design inspection of a planned data pipeline with one traceable result per policy rule.</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -38,7 +37,7 @@ st.graphviz_chart(
 )
 
 # ---------------------------------------------------------------- statuses
-st.markdown("**Six possible statuses per rule.** Missing evidence never gives PASS.")
+st.markdown("**Six possible statuses per rule.**")
 chips = "".join(
     f'<span class="chip" title="{meaning}">{icon} {status.replace("_", " ")}</span>'
     for status, icon, meaning, _ in STATUS_MODEL
@@ -48,17 +47,21 @@ st.markdown(f'<div class="chips">{chips}</div>', unsafe_allow_html=True)
 # ---------------------------------------------------------------- why
 st.subheader("Why")
 for column, (title, text) in zip(
-    st.columns(3),
+  st.columns(3),
     [
-        ("Checking happens too late",
-         "Showing that a pipeline meets its obligations still relies on manually "
-         "gathered evidence. Automated checking of the design is lacking."),
-        ("Policy-as-Code targets infrastructure",
-         "Rule engines such as OPA check cloud and Kubernetes settings, "
-         "not legal obligations on data-pipeline designs."),
-        ("Designs lack the evidence",
-         "Pipeline design tools export structure, not compliance facts "
-         "such as special-category data or DPIA checkpoints."),
+        ("No automated checking of designs",
+        "Automated tools that check the compliance of software designs, are still lacking "
+        "([Vanezi et al., 2026](https://arxiv.org/html/2604.16361))."),
+        ("Policy-as-Code targets deployment configurations",
+        "Policy-as-Code with Open Policy Agent (OPA) automates security, compliance and "
+        "governance checks in CI/CD pipelines and Kubernetes "
+        "([Nogueira & Resende, 2026](https://www.mdpi.com/2073-431X/15/7/453)). "
+        "These checks inspect deployment configurations, not compliance obligations on "
+        "data-pipeline designs."),
+        ("Designs lack compliance facts",
+         "Automated checking needs compliance facts in the design model "
+         "([Torre et al., 2021](https://arxiv.org/pdf/2007.12046)). The inLUMEN export "
+         "for the TK/MUNDAT use case contains none of the facts the rules need (see Case)."),
     ],
 ):
     with column.container(border=True):

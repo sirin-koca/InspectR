@@ -64,7 +64,6 @@ st.subheader("Acceptance criteria")
 table(
     [{"ID": i, "Criterion": c, "Status": s, "Note": n} for i, c, s, n in ACCEPTANCE],
 )
-st.caption("From the Scope and Evaluation Proposal (30 October 2026).")
 
 # ---------------------------------------------------------------- limits
 st.subheader("Limits of validity")

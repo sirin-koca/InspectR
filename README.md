@@ -55,6 +55,11 @@ ERROR is outside the table: InspectR failed, not the blueprint. An undetermined 
 
 PASS is not a compliance certificate: it means the design declares the control.
 
+## Case: TK / MUNDAT
+
+The **Sickleave** scenario (DataPACT D5.1 §3.7) assembles a research dataset from health-services and citizen-registry sources, integrates and anonymises it, and shares it with an external recipient. It involves special-category health data, integration of sources, and sharing for a new purpose.
+
+
 ## Rule set tk-v2.0
 
 | Rule | TK requirement | Trigger | Control | Legal reference |
@@ -64,10 +69,6 @@ PASS is not a compliance certificate: it means the design declares the control.
 | TK-R3 · Purpose compatibility before sharing | Lawfulness | A `data_transfer` node exists and a source declares `contains_personal_data: true`. | Gates carrying `purpose_compatibility_declared` declare `true`. Best outcome is HUMAN, never PASS. | GDPR Art. 5(1)(b), Art. 6(4) |
 
 TK-R1 merges v1 rules TK-001 and TK-002; TK-R2 replaces TK-004; TK-R3 replaces TK-005. TK-003 and TK-006 were dropped. Each rule's decision table is in the header of its Rego file. Reasons and fixes: [`docs/RULESET-V2-CHANGES.md`](docs/RULESET-V2-CHANGES.md).
-
-## Case: TK / MUNDAT
-
-The **Sickleave** scenario (DataPACT D5.1 §3.7) assembles a research dataset from health-services and citizen-registry sources, integrates and anonymises it, and shares it with an external recipient. It involves special-category health data, integration of sources, and sharing for a new purpose.
 
 | Blueprint | Content | Role |
 |---|---|---|
@@ -138,14 +139,6 @@ Every result carries `rule`, `status`, `legal_reference`, `reason`, `evidence`, 
 ## Limitations
 
 The rules are unreviewed interpretations; legal references are not validated mappings. InspectR reads declared properties only. It does not follow graph paths or checkpoint ordering, resolve catalogue references, or verify assessments, agreements, anonymisation or runtime controls. The raw inLUMEN export uses `kind` instead of `type` and has no compliance facts, so it cannot pass any rule until an adapter exists. Only one use case (TK) is encoded.
-
-## Open questions for SINTEF
-
-1. Is three rules acceptable for iteration 1, or should TK-003 (data-sharing agreement) return as TK-R4?
-2. Should a design with special-category data and no compliance gate be FAIL (current) or UNKNOWN?
-3. Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?
-4. Who at SINTEF or TK can review the three rules for fidelity (AC7)?
-5. Is there any confidentiality restriction on deriving rules from TK documents in a public repository?
 
 ## Running
 

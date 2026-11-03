@@ -144,11 +144,10 @@ ACCEPTANCE = [
 ]
 
 OPEN_QUESTIONS = [
-    "Is three rules acceptable for iteration 1, or should TK-003 (data-sharing agreement) return as TK-R4?",
-    "Should a design with special-category data and no compliance gate be FAIL (current) or UNKNOWN?",
+    "Are these three rules acceptable for current iteration?",
+    "Should a design blueprint with special-category data and no compliance gate be FAIL (current) or UNKNOWN?",
     "Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?",
-    "Who at SINTEF or TK can review the three rules for fidelity (AC7)?",
-    "Any confidentiality restriction on deriving rules from TK documents in a public repository?",
+    "Who at SINTEF or TK can review the three rules for fidelity and accuracy (AC7)?",
 ]
 
 
