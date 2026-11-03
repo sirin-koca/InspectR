@@ -60,6 +60,7 @@ if "blueprint_filename" not in st.session_state:
 
 pages = [
     st.Page("pages/overview.py", title="Overview", default=True),
+    st.Page("pages/research.py", title="Research"),
     st.Page("pages/method.py", title="Method"),
     st.Page("pages/case.py", title="Case: TK / MUNDAT"),
     st.Page("pages/inspection.py", title="Inspect"),
