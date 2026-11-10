@@ -1,0 +1,120 @@
+{
+  "schema_version": "inlumen.project@2",
+  "project": {
+    "name": "inLUMEN Project",
+    "description": "",
+    "exported_at": "2026-11-05T14:59:40.877Z"
+  },
+  "pipeline": {
+    "nodes": [
+      {
+        "id": "3",
+        "kind": "destination",
+        "template": {
+          "id": "core.destination",
+          "name": "Custom"
+        },
+        "label": "TK UC Sickleave Data Sink",
+        "description": "Deliver enriched records to downstream consumer (e.g., data lake).",
+        "position": {
+          "x": 600,
+          "y": 0
+        },
+        "inputs": [
+          {
+            "id": "data",
+            "name": "data",
+            "type": "any",
+            "required": true,
+            "description": "Data to deliver."
+          }
+        ],
+        "outputs": [],
+        "parameters": {}
+      },
+      {
+        "id": "2",
+        "kind": "task",
+        "template": {
+          "id": "core.task",
+          "name": "Task"
+        },
+        "label": "Validate & Enrich",
+        "description": "Validate schema and add compliance metadata to each sick‑leave record.",
+        "position": {
+          "x": 300,
+          "y": 0
+        },
+        "inputs": [
+          {
+            "id": "input",
+            "name": "input",
+            "type": "any",
+            "required": true,
+            "description": "Task input."
+          }
+        ],
+        "outputs": [
+          {
+            "id": "output",
+            "name": "output",
+            "type": "any",
+            "required": true,
+            "description": "Task output."
+          }
+        ],
+        "parameters": {},
+        "implementation": {}
+      },
+      {
+        "id": "1",
+        "kind": "source",
+        "template": {
+          "id": "core.source",
+          "name": "Custom"
+        },
+        "label": "TK UC Sickleave Data Source",
+        "description": "Ingress of TK UC sick‑leave records (CSV/JSON).",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "data",
+            "name": "data",
+            "type": "any",
+            "required": true,
+            "description": "Source data."
+          }
+        ],
+        "parameters": {}
+      }
+    ],
+    "connections": [
+      {
+        "id": "reactflow__edge-2-output-3-data",
+        "from": {
+          "node": "2",
+          "port": "output"
+        },
+        "to": {
+          "node": "3",
+          "port": "data"
+        }
+      },
+      {
+        "id": "reactflow__edge-1-data-2-input",
+        "from": {
+          "node": "1",
+          "port": "data"
+        },
+        "to": {
+          "node": "2",
+          "port": "input"
+        }
+      }
+    ]
+  }
+}
