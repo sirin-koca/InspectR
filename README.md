@@ -145,6 +145,20 @@ The rules are unreviewed interpretations; legal references are not validated map
 3. Can inLUMEN export node type and the compliance fields, or is an adapter on the InspectR side preferred?
 4. Who at SINTEF or TK can review the three rules for fidelity (AC7)?
 
+## Documentation / Wiki
+
+The project wiki lives in [`docs/wiki/`](docs/wiki/README.md) as Markdown files:
+
+- [Wiki home / overview](docs/wiki/README.md)
+- [1 · Getting started](docs/wiki/01-getting-started.md)
+- [2 · Architecture](docs/wiki/02-architecture.md)
+- [3 · Policy engine (`src/`)](docs/wiki/03-policy-engine.md)
+- [4 · Rego policies (`policies/tk/`)](docs/wiki/04-rego-policies.md)
+- [5 · Streamlit app](docs/wiki/05-streamlit-app.md)
+- [6 · Data and blueprints](docs/wiki/06-data-and-blueprints.md)
+- [7 · Testing and tooling](docs/wiki/07-testing-and-tooling.md)
+- [8 · Glossary](docs/wiki/08-glossary.md)
+
 ## Running
 
 Requirements: Python 3.12, the packages in `requirements.txt`, and OPA ≥ 1.0. The evaluator finds OPA via `OPA_PATH`, then `opa` on `PATH`, then `C:\Tools\OPA\opa.exe`.
@@ -175,6 +189,7 @@ policies/tk/               lib.rego, policy.rego, TK-R1..R3.rego, tests/
 tests/                     pytest integration tests
 data/                      Raw inLUMEN exports, enriched blueprints, taxonomy
 docs/RULESET-V2-CHANGES.md What changed from v1 and why
+docs/wiki/                 Project wiki (Markdown)
 tk-uc/                     MUNDAT source material
 images/                    Figures and logos
 ```
